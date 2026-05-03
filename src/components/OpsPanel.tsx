@@ -59,29 +59,6 @@ function initials(name: string): string {
   return (a + b).toUpperCase()
 }
 
-const DEMO_AUDIT = [
-  { ts: "04:21", desc: "Recommendation drafted · brief v2 ready", flag: "recent" },
-  { ts: "04:09", desc: "trust-score 0.42 → source #4 flagged", flag: "flagged" },
-  { ts: "03:58", desc: "source #4 (HN) marked unverified", flag: "" },
-  { ts: "03:51", desc: "evidence pulled · CB Insights State of Fintech", flag: "" },
-  { ts: "03:40", desc: "evidence pulled · plaid.com/customers", flag: "" },
-  { ts: "03:22", desc: "agent.run started · external · claude", flag: "" },
-  { ts: "03:12", desc: "agent registered as nash-research", flag: "" }
-]
-
-const DEMO_CHAT = [
-  { initial: "RB", name: "Research bot", ts: "22:20", msg: "Updated trust-score after new HN flags.", flagged: false },
-  { initial: "N", name: "Nash", ts: "22:18", msg: "Check source #4 — sample bias risk on the 60% claim.", flagged: true },
-  { initial: "M", name: "Morrow", ts: "22:11", msg: "Data pull complete. No schema issues found.", flagged: false },
-  { initial: "C", name: "Corwin", ts: "21:58", msg: "Q3 model retune in progress. ETA 14m.", flagged: false }
-]
-
-const DEMO_FILES = [
-  { kind: "doc", label: "DOC", name: "Q3 brief draft v2.docx", meta: "edited 04:21 · 24 KB", chev: ICON_CHEV },
-  { kind: "pdf", label: "PDF", name: "Plaid_customers_snapshot.pdf", meta: "attached 03:40 · 1.2 MB", chev: ICON_CHEV },
-  { kind: "sheet", label: "XLS", name: "trust-score-output.xlsx", meta: "generated 04:09 · 38 KB", chev: ICON_CHEV },
-  { kind: "deck", label: "LNK", name: "Q3 deck thread", meta: "linked 04:21 · external", chev: ICON_EXT }
-]
 
 function fileKindFor(location: string): { kind: string; label: string } {
   const l = location.toLowerCase()
@@ -106,11 +83,10 @@ export function OpsPanel() {
   const [draft, setDraft] = useState("")
   const feedRef = useRef<HTMLDivElement | null>(null)
 
-  const isDemo = allAgents.length === 0
-
-  const auditCount = isDemo ? DEMO_AUDIT.length : activity.length
-  const chatCount = isDemo ? DEMO_CHAT.length : chatMessages.length
-  const fileCount = isDemo ? DEMO_FILES.length : artifactsList.length
+  const auditCount = activity.length
+  const chatCount = chatMessages.length
+  const fileCount = artifactsList.length
+  void allAgents // retained for future "global activity" rollup
 
   useEffect(() => {
     const feed = feedRef.current
@@ -167,16 +143,8 @@ export function OpsPanel() {
         {/* AUDIT */}
         <div className={`tab-section${tab === "audit" ? " active" : ""}`} role="tabpanel">
           <div className="body">
-            {isDemo ? (
-              DEMO_AUDIT.map((row, i) => (
-                <button key={i} type="button" className={`audit-row ${row.flag}`}>
-                  <span className="dot" />
-                  <span className="ts">{row.ts}</span>
-                  <span className="desc">{row.desc}</span>
-                </button>
-              ))
-            ) : activity.length === 0 ? (
-              <div className="panel-empty">No activity yet for this agent.</div>
+            {activity.length === 0 ? (
+              <div className="panel-empty">No activity yet.</div>
             ) : (
               activity
                 .slice()
@@ -203,20 +171,7 @@ export function OpsPanel() {
         {/* CHAT */}
         <div className={`tab-section${tab === "chat" ? " active" : ""}`} role="tabpanel">
           <div className="body" ref={feedRef}>
-            {isDemo ? (
-              DEMO_CHAT.map((row, i) => (
-                <button key={i} type="button" className="chat-row">
-                  <div className={`chat-avatar${row.flagged ? " flagged" : ""}`}>{row.initial}</div>
-                  <div className="chat-content">
-                    <div className="top">
-                      <span className="name">{row.name}</span>
-                      <span className="ts">{row.ts}</span>
-                    </div>
-                    <div className="msg">{row.msg}</div>
-                  </div>
-                </button>
-              ))
-            ) : chatMessages.length === 0 ? (
+            {chatMessages.length === 0 ? (
               <div className="panel-empty">
                 {agent
                   ? "No chat yet. CLI-emitted chat and agent replies will appear here."
@@ -241,8 +196,7 @@ export function OpsPanel() {
               ))
             )}
           </div>
-          {!isDemo && (
-            <form
+          <form
               className="chat-composer"
               onSubmit={(ev) => {
                 ev.preventDefault()
@@ -269,25 +223,13 @@ export function OpsPanel() {
                 Send
               </button>
             </form>
-          )}
         </div>
 
         {/* FILES */}
         <div className={`tab-section${tab === "files" ? " active" : ""}`} role="tabpanel">
           <div className="body">
-            {isDemo ? (
-              DEMO_FILES.map((row, i) => (
-                <button key={i} type="button" className="deliv-row">
-                  <div className={`deliv-icon ${row.kind}`}>{row.label}</div>
-                  <div className="deliv-content">
-                    <div className="name">{row.name}</div>
-                    <div className="meta">{row.meta}</div>
-                  </div>
-                  <span className="chev">{row.chev}</span>
-                </button>
-              ))
-            ) : artifactsList.length === 0 ? (
-              <div className="panel-empty">No deliverables yet for this lane.</div>
+            {artifactsList.length === 0 ? (
+              <div className="panel-empty">No files attached yet.</div>
             ) : (
               artifactsList.map((art, i) => {
                 const k = fileKindFor(art.location)

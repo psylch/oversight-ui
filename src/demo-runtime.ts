@@ -13,7 +13,13 @@
 //
 // Tweak DEMO_PACE to slow down or speed up.
 
-import { applyEvent, applyEvents, setWsConnected, type AgentActivityItem } from "./store"
+import {
+  applyEvent,
+  applyEvents,
+  readState,
+  setWsConnected,
+  type AgentActivityItem
+} from "./store"
 import type {
   AgentStateEvent,
   ArtifactAddedEvent,
@@ -187,10 +193,11 @@ function bootScenario() {
 }
 
 let started = false
-export function startDemoRuntime() {
+export function startDemoRuntime(opts: { skipBoot?: boolean } = {}) {
   if (started) return
   started = true
   setWsConnected(true)
+  if (opts.skipBoot) return
   // small delay so React mounts before first events
   setTimeout(bootScenario, 60)
 }
@@ -198,22 +205,29 @@ export function startDemoRuntime() {
 // Replaces ws-client's sendAction — closes the decision locally so the UI
 // reflects user input. In a real backend this round-trips through the daemon.
 export function sendAction(decisionId: string, actionId: string) {
-  emit(decisionClosed(NASH, decisionId, actionId))
+  // Look up the agent that owns this decision from the live store
+  const state = readState()
+  const open = state.openDecisions.find((d) => d.decision_id === decisionId)
+  const ownerId = open?.agent_id ?? NASH
+  const owner = state.agents.get(ownerId)
+  const displayName = owner?.display_name ?? "Agent"
+
+  emit(decisionClosed(ownerId, decisionId, actionId))
   emit(
     agent(
-      NASH,
-      "Nash · research",
+      ownerId,
+      displayName,
       "done",
-      actionId === "approve" ? "Brief shipped" : "Brief rejected — awaiting next step",
-      5 * 60 * 1000
+      actionId === "approve" ? "Decision approved" : "Decision rejected",
+      (owner?.elapsed_ms ?? 0) + 1000
     )
   )
   emit(
     chat(
-      NASH,
+      ownerId,
       "system",
       actionId === "approve"
-        ? "Decision approved — v2 shipped to #q3-brief."
+        ? "Decision approved — action queued for downstream."
         : "Decision rejected — agent paused for direction."
     )
   )
@@ -228,14 +242,139 @@ export function sendChatInput(agentId: string, text: string) {
   }, 700)
 }
 
-// Stand-in for AgentDispatcher's POST /ui/runs — adds a fake agent locally.
+// Per-preset follow-up scripts so dispatched agents come alive and emit a
+// realistic decision after a few seconds. Keeps the demo narrative going
+// after the user clicks a preset card.
+const FOLLOW_UPS: Record<
+  string,
+  {
+    workingIntent: string
+    chats: [string, string]
+    decision: {
+      headline: string
+      recommendation: string
+      evidence: Array<{
+        ref: string
+        label: string
+        kind: "url" | "snippet"
+        location: string
+      }>
+    }
+  }
+> = {
+  "research-analyst": {
+    workingIntent: "Pulling sources on AI agent ergonomics",
+    chats: [
+      "Indexed 14 sources, 3 flagged for low trust.",
+      "Found 2 corroborating cases for the main claim."
+    ],
+    decision: {
+      headline: "Cite Karpathy 2024 talk as primary anchor for ergonomics section",
+      recommendation:
+        "Use the Karpathy 'AI agent ergonomics' talk (Nov 2024) as the anchor citation. Drops 2 weaker secondary sources from the brief.",
+      evidence: [
+        { ref: "k_talk", label: "Karpathy · Agent Ergonomics talk (YouTube)", kind: "url", location: "https://example.com/karpathy-talk" },
+        { ref: "yc_post", label: "YC Research · Agent Workflows", kind: "url", location: "https://example.com/yc-agent-workflows" },
+        { ref: "tscore", label: "trust-score 0.78", kind: "snippet", location: "trust-score 0.78 — high overlap with peer-reviewed sources" },
+        { ref: "hn_skim", label: "HN reactions · mostly positive", kind: "snippet", location: "HN thread: 312 upvotes, 47 comments, no flagged corrections" }
+      ]
+    }
+  },
+  "writing-partner": {
+    workingIntent: "Drafting introduction",
+    chats: [
+      "First pass complete (320 words).",
+      "Forked between two opening hooks — need your call."
+    ],
+    decision: {
+      headline: "Choose opening hook for the introduction",
+      recommendation:
+        "Recommend Hook A (concrete scenario about a Friday-evening incident) over Hook B (abstract framing). Stronger pull, matches your prior voice.",
+      evidence: [
+        { ref: "hook_a", label: "Draft · Hook A (concrete scenario)", kind: "snippet", location: "It's Friday 6pm. Three Claude sessions are open. Each one needs you..." },
+        { ref: "hook_b", label: "Draft · Hook B (abstract framing)", kind: "snippet", location: "The supervisor is the new bottleneck in agent workflows..." },
+        { ref: "voice", label: "Your past 5 essays · concrete-first ratio 4/5", kind: "snippet", location: "Voice analysis: 4 of 5 prior essays open with a concrete scene." }
+      ]
+    }
+  },
+  "qa-reviewer": {
+    workingIntent: "Reproducing login redirect issue",
+    chats: [
+      "Reproduced the loop in 3/3 attempts on Chrome 130.",
+      "Found a stale cookie clears it. Fix candidate identified."
+    ],
+    decision: {
+      headline: "Approve fix for issue #842 — clear stale auth cookie on login",
+      recommendation:
+        "Recommend the cookie-clear approach over a full session reset. Smaller surface, no impact on other auth flows.",
+      evidence: [
+        { ref: "repro", label: "Repro video · 3 attempts", kind: "snippet", location: "Recording: Chrome → /login → loops to /login → cleared cookie → success." },
+        { ref: "diff", label: "diff · auth/login.ts (+12 −3)", kind: "snippet", location: "+ if (req.cookies.session_stale) res.clearCookie('session_stale')" },
+        { ref: "tests", label: "All login tests pass (24/24)", kind: "snippet", location: "Test suite: 24 passed, 0 failed, 0 skipped (run: 14:32 UTC)" }
+      ]
+    }
+  },
+  "project-scout": {
+    workingIntent: "Mapping repo structure",
+    chats: [
+      "Indexed 142 files across 8 modules.",
+      "Identified two refactor candidates with different risk profiles."
+    ],
+    decision: {
+      headline: "Pick refactor target: billing module first, or auth migration?",
+      recommendation:
+        "Recommend billing module first. Smaller blast radius (4 callers vs 23), fully covered by tests, no schema migration needed.",
+      evidence: [
+        { ref: "bill", label: "billing/ · 4 internal callers · test coverage 91%", kind: "snippet", location: "billing/ — 4 callers, 91% coverage, no DB schema migration." },
+        { ref: "auth", label: "auth/ · 23 callers · schema migration required", kind: "snippet", location: "auth/ — 23 callers, 67% coverage, requires schema migration." },
+        { ref: "graph", label: "Dependency graph (snippet)", kind: "snippet", location: "billing → invoice, ledger, customer\nauth → 23 modules incl. session/, api/, gateway/" }
+      ]
+    }
+  }
+}
+
+// Stand-in for AgentDispatcher's POST /ui/runs — adds a fake agent locally
+// AND schedules a believable follow-up arc (working → chat → decision lands)
+// so the dispatched lane doesn't sit empty.
 export function dispatchAgent(opts: {
   display_name: string
   intent?: string
+  preset?: string
 }) {
   const id = `agent_${Math.random().toString(36).slice(2, 8)}`
+  const followUp = opts.preset ? FOLLOW_UPS[opts.preset] : undefined
   emit(agent(id, opts.display_name, "working", opts.intent ?? "Starting up", 0))
-  // unused activity hint for typing
+
+  if (followUp) {
+    setTimeout(() => {
+      emit(agent(id, opts.display_name, "working", followUp.workingIntent, 4000))
+      emit(chat(id, "agent", followUp.chats[0]))
+    }, 4000 * DEMO_PACE)
+
+    setTimeout(() => {
+      emit(chat(id, "agent", followUp.chats[1]))
+    }, 9000 * DEMO_PACE)
+
+    setTimeout(() => {
+      const decisionId = `dec_${id}`
+      const evidenceEvents: Event[] = followUp.decision.evidence.map((e) =>
+        artifact(id, e.ref, e.kind, e.location, e.label)
+      )
+      emitMany([
+        ...evidenceEvents,
+        agent(id, opts.display_name, "stalled", "Awaiting your decision", 12000),
+        decisionOpen(
+          id,
+          decisionId,
+          followUp.decision.headline,
+          followUp.decision.recommendation,
+          followUp.decision.evidence.map((e) => ({ ref: e.ref, label: e.label })),
+          "critical"
+        )
+      ])
+    }, 12000 * DEMO_PACE)
+  }
+
   void ({} as AgentActivityItem)
   return id
 }

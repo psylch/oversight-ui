@@ -56,7 +56,13 @@ export function OsBar({
             <path d="m20 20-3.5-3.5" />
           </svg>
         </button>
-        <button className="header-icon-btn" type="button" aria-label="Dispatch agent" onClick={onDispatch}>
+        <button
+          className="header-icon-btn has-tip"
+          type="button"
+          aria-label="Dispatch agent"
+          data-tip="New agent"
+          onClick={onDispatch}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />
           </svg>

@@ -91,23 +91,6 @@ function Section({ label, variant, count, children }: SectionProps) {
   )
 }
 
-const DEMO_QUEUE = {
-  needs: [
-    { id: "demo-nash", name: "Nash · research", sub: "Q3 brief Plaid claim", elapsed: "04:21" },
-    { id: "demo-morrow", name: "Morrow · data", sub: "Perm denied warehouse", elapsed: "02:14" }
-  ],
-  running: [
-    { id: "demo-corwin", name: "Corwin · pricing", sub: "Q3 model retune", elapsed: "14m" },
-    { id: "demo-harlow", name: "Harlow · monitor", sub: "Soak test tail 7 of 12", elapsed: "03:11" }
-  ],
-  awaiting: [
-    { id: "demo-tilden", name: "Tilden · eng", sub: "Merge release/2.4", elapsed: "00:48" }
-  ],
-  background: [
-    { id: "demo-bain", name: "Bain · archive", sub: "Weekly index pass", elapsed: "1h 22m" }
-  ]
-} as const
-
 export function Sidebar() {
   const groups = useAgentsByGroup()
   const selectedId = useSelectedAgentId()
@@ -118,14 +101,7 @@ export function Sidebar() {
     groups.awaitingSignoff.length +
     groups.background.length
 
-  const isDemo = total === 0
-  const demoTotal =
-    DEMO_QUEUE.needs.length +
-    DEMO_QUEUE.running.length +
-    DEMO_QUEUE.awaiting.length +
-    DEMO_QUEUE.background.length
-
-  // sub-text helper for live agent: prefer the freshest open decision headline
+  // sub-text helper: prefer the freshest open decision headline
   const subFor = (a: AgentStateEvent) => {
     const open = openDecisions.find((d) => d.agent_id === a.agent_id)
     return open?.headline ?? a.intent ?? a.state
@@ -136,7 +112,7 @@ export function Sidebar() {
       <div className="queue-top">
         <div className="queue-title">
           Decision queue
-          <span className="queue-count">{isDemo ? demoTotal : total}</span>
+          <span className="queue-count">{total}</span>
         </div>
         <button className="queue-filter" type="button" aria-label="Filter">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -146,113 +122,64 @@ export function Sidebar() {
       </div>
 
       <div className="queue-sections">
-      {isDemo ? (
-        <>
-          <Section label="Needs review" variant="needs" count={DEMO_QUEUE.needs.length}>
-            {DEMO_QUEUE.needs.map((r, i) => (
-              <Row
-                key={r.id}
-                name={r.name}
-                sub={r.sub}
-                elapsed={r.elapsed}
-                selected={i === 0}
-                variant="needs"
-                onClick={() => {}}
-              />
-            ))}
-          </Section>
-          <Section label="Running" variant="running" count={DEMO_QUEUE.running.length}>
-            {DEMO_QUEUE.running.map((r) => (
-              <Row
-                key={r.id}
-                name={r.name}
-                sub={r.sub}
-                elapsed={r.elapsed}
-                selected={false}
-                variant="flight"
-                onClick={() => {}}
-              />
-            ))}
-          </Section>
-          <Section label="Awaiting decision" variant="awaiting" count={DEMO_QUEUE.awaiting.length}>
-            {DEMO_QUEUE.awaiting.map((r) => (
-              <Row
-                key={r.id}
-                name={r.name}
-                sub={r.sub}
-                elapsed={r.elapsed}
-                selected={false}
-                variant="needs"
-                onClick={() => {}}
-              />
-            ))}
-          </Section>
-          <Section label="Background" variant="" count={DEMO_QUEUE.background.length}>
-            {DEMO_QUEUE.background.map((r) => (
-              <Row
-                key={r.id}
-                name={r.name}
-                sub={r.sub}
-                elapsed={r.elapsed}
-                selected={false}
-                variant="needs"
-                onClick={() => {}}
-              />
-            ))}
-          </Section>
-        </>
-      ) : (
-        <>
-          <Section label="Needs review" variant="needs" count={groups.needsYou.length}>
-            {groups.needsYou.map((a) => (
-              <AgentRow
-                key={a.agent_id}
-                agent={a}
-                selected={a.agent_id === selectedId}
-                variant="needs"
-                sub={subFor(a)}
-              />
-            ))}
-          </Section>
-          <Section label="Running" variant="running" count={groups.running.length}>
-            {groups.running.map((a) => (
-              <AgentRow
-                key={a.agent_id}
-                agent={a}
-                selected={a.agent_id === selectedId}
-                variant="flight"
-                sub={subFor(a)}
-              />
-            ))}
-          </Section>
-          <Section
-            label="Awaiting decision"
-            variant="awaiting"
-            count={groups.awaitingSignoff.length}
-          >
-            {groups.awaitingSignoff.map((a) => (
-              <AgentRow
-                key={a.agent_id}
-                agent={a}
-                selected={a.agent_id === selectedId}
-                variant="needs"
-                sub={subFor(a)}
-              />
-            ))}
-          </Section>
-          <Section label="Background" variant="" count={groups.background.length}>
-            {groups.background.map((a) => (
-              <AgentRow
-                key={a.agent_id}
-                agent={a}
-                selected={a.agent_id === selectedId}
-                variant="needs"
-                sub={subFor(a)}
-              />
-            ))}
-          </Section>
-        </>
-      )}
+        {total === 0 ? (
+          <div className="queue-empty">
+            No agents in flight.
+            <br />
+            Dispatch one from the center stage.
+          </div>
+        ) : (
+          <>
+            <Section label="Needs review" variant="needs" count={groups.needsYou.length}>
+              {groups.needsYou.map((a) => (
+                <AgentRow
+                  key={a.agent_id}
+                  agent={a}
+                  selected={a.agent_id === selectedId}
+                  variant="needs"
+                  sub={subFor(a)}
+                />
+              ))}
+            </Section>
+            <Section label="Running" variant="running" count={groups.running.length}>
+              {groups.running.map((a) => (
+                <AgentRow
+                  key={a.agent_id}
+                  agent={a}
+                  selected={a.agent_id === selectedId}
+                  variant="flight"
+                  sub={subFor(a)}
+                />
+              ))}
+            </Section>
+            <Section
+              label="Awaiting decision"
+              variant="awaiting"
+              count={groups.awaitingSignoff.length}
+            >
+              {groups.awaitingSignoff.map((a) => (
+                <AgentRow
+                  key={a.agent_id}
+                  agent={a}
+                  selected={a.agent_id === selectedId}
+                  variant="needs"
+                  sub={subFor(a)}
+                />
+              ))}
+            </Section>
+            <Section label="Background" variant="" count={groups.background.length}>
+              {groups.background.map((a) => (
+                <AgentRow
+                  key={a.agent_id}
+                  agent={a}
+                  selected={a.agent_id === selectedId}
+                  variant="needs"
+                  sub={subFor(a)}
+                />
+              ))}
+            </Section>
+          </>
+        )}
       </div>
     </aside>
   )

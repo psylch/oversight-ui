@@ -30,7 +30,10 @@ class MountErrorBoundary extends React.Component<
   }
 }
 
-startDemoRuntime()
+// `?fresh` URL flag → start with no agents (cold-start dispatch hub demo).
+// Default → boot the populated scenario.
+const fresh = new URLSearchParams(window.location.search).has("fresh")
+startDemoRuntime({ skipBoot: fresh })
 
 const rootEl = document.getElementById("root")
 if (!rootEl) throw new Error("#root not found")

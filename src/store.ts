@@ -73,6 +73,11 @@ function getSnapshot() {
   return snapshot
 }
 
+// Synchronous read for non-React callers (e.g. demo-runtime side effects).
+export function readState(): Readonly<State> {
+  return snapshot
+}
+
 function pushActivity(item: AgentActivityItem) {
   state.activity.push(item)
   if (state.activity.length > 500) {

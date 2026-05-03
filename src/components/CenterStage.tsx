@@ -138,12 +138,90 @@ function urgencyPillLabel(u: DecisionOpenEvent["urgency"]): string {
   return "FYI"
 }
 
+interface DispatchPreset {
+  id: string
+  mark: string
+  color: "cyan" | "violet" | "amber" | "green"
+  name: string
+  description: string
+  goal: string
+}
+
+const DISPATCH_PRESETS: DispatchPreset[] = [
+  {
+    id: "research-analyst",
+    mark: "R",
+    color: "cyan",
+    name: "Research Analyst",
+    description: "Finds sources, checks claims, returns evidence-backed notes.",
+    goal: "Pull and verify sources for the current brief"
+  },
+  {
+    id: "writing-partner",
+    mark: "W",
+    color: "violet",
+    name: "Writing Partner",
+    description: "Turns rough direction into structured drafts; pauses at forks.",
+    goal: "Draft the introduction and surface fork points"
+  },
+  {
+    id: "qa-reviewer",
+    mark: "Q",
+    color: "amber",
+    name: "QA Reviewer",
+    description: "Reproduces issues concretely and verifies fixes.",
+    goal: "Triage open issues and propose fixes"
+  },
+  {
+    id: "project-scout",
+    mark: "S",
+    color: "green",
+    name: "Project Scout",
+    description: "Maps a workspace, builds context, proposes the next move.",
+    goal: "Map the codebase and propose next refactor target"
+  }
+]
+
 function CenterEmpty(_props: { counter: string; calm: boolean }) {
   return (
     <section className="center no-eyebrow">
-      <div className="center-empty">
-        <h1>All quiet.</h1>
-        <p>Dispatch an agent from the header (+) to start a lane. The latest decision will land here.</p>
+      <div className="dispatch-hub">
+        <header className="dispatch-hub-head">
+          <h1>Start the morning.</h1>
+          <p>Dispatch an agent on a task — or connect one already running in your terminal.</p>
+        </header>
+
+        <div className="dispatch-hub-grid">
+          {DISPATCH_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="dispatch-hub-card"
+              onClick={async () => {
+                const { dispatchAgent } = await import("../demo-runtime")
+                dispatchAgent({
+                  display_name: `${p.name.split(" ")[0]} · ${p.id.split("-")[0]}`,
+                  intent: p.goal,
+                  preset: p.id
+                })
+              }}
+            >
+              <span className={`preset-avatar ${p.color}`}>{p.mark}</span>
+              <span className="dispatch-hub-card-copy">
+                <span className="dispatch-hub-card-name">{p.name}</span>
+                <span className="dispatch-hub-card-desc">{p.description}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="dispatch-hub-cli">
+          <div className="dispatch-hub-cli-label">Or watch an agent already running:</div>
+          <pre className="dispatch-hub-cli-block">
+            <code>{`$ npm install -g @oversight/cli
+$ oversight register --runtime claude`}</code>
+          </pre>
+        </div>
       </div>
     </section>
   )
