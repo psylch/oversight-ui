@@ -138,21 +138,9 @@ function urgencyPillLabel(u: DecisionOpenEvent["urgency"]): string {
   return "FYI"
 }
 
-function CenterEmpty({ counter, calm }: { counter: string; calm: boolean }) {
+function CenterEmpty(_props: { counter: string; calm: boolean }) {
   return (
-    <section className={`center${calm ? " no-eyebrow" : ""}`}>
-      {!calm && (
-        <div className="eyebrow">
-          <div className="eyebrow-left">
-            <span className="dot" />
-            <span>Decision required</span>
-          </div>
-          <div className="eyebrow-right">
-            <span className="shield">{ICON_SHIELD}</span>
-            <span>{counter}</span>
-          </div>
-        </div>
-      )}
+    <section className="center no-eyebrow">
       <div className="center-empty">
         <h1>All quiet.</h1>
         <p>Dispatch an agent from the header (+) to start a lane. The latest decision will land here.</p>
@@ -349,11 +337,6 @@ interface DossierProps {
 }
 
 function DossierCard(p: DossierProps) {
-  const counter =
-    p.total === 0
-      ? "All clear"
-      : `${String(p.criticalCount).padStart(2, "0")} / ${String(p.total).padStart(2, "0")} pending`
-  const isCritical = p.meta.pillKind === "needs"
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   useLayoutEffect(() => {
@@ -374,23 +357,8 @@ function DossierCard(p: DossierProps) {
     }
   }, [p.title, p.evidence.length])
 
-  const showEyebrow = p.meta.pillKind !== "fyi"
-
   return (
-    <section className={`center${showEyebrow ? "" : " no-eyebrow"}`}>
-      {showEyebrow && (
-        <div className={`eyebrow${isCritical ? "" : " calm"}`}>
-          <div className="eyebrow-left">
-            <span className="dot" />
-            <span>{isCritical ? "Decision required" : "Sign-off open"}</span>
-          </div>
-          <div className="eyebrow-right">
-            <span className="shield">{ICON_SHIELD}</span>
-            <span>{counter}</span>
-          </div>
-        </div>
-      )}
-
+    <section className="center no-eyebrow">
       <article className="card">
        <div className="card-scroll" ref={scrollRef}>
         <header className="card-meta">
