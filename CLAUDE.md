@@ -56,7 +56,44 @@ Read this file first. It tells you the rules. Then read `docs/design-system.md` 
 2. `npm run dev` (http://localhost:5173)
 3. Make changes. Verify in the browser against `reference/v7-dossier.html`.
 4. `npm run build` (must pass)
-5. Commit, push, open PR (see `docs/CONTRIBUTING.md`)
+5. Commit, push, open PR (see Git workflow below)
+
+## Git workflow (fork + PR via `gh` CLI)
+
+External contributors work in their own fork and open PRs against `psylch/oversight-ui`. If you are helping a contributor, drive these steps for them:
+
+```bash
+# One-time setup (skip if already cloned)
+gh repo fork psylch/oversight-ui --clone --remote
+cd oversight-ui
+
+# For every change
+git checkout -b <short-feature-name>           # e.g. drill-down-v1
+# ... edit files ...
+npm run typecheck && npm run build              # both must pass
+git add <specific files>                        # do NOT use `git add .`
+git commit -m "<imperative summary>"
+git push -u origin <short-feature-name>
+
+# Open PR
+gh pr create --base main --head <username>:<short-feature-name> \
+  --title "<title>" --body "<summary + screenshots if visual>"
+
+# Sync with upstream when needed
+git fetch upstream
+git rebase upstream/main
+git push --force-with-lease
+```
+
+Rules for PRs:
+
+- **One feature per PR.** Don't bundle drill-down + dispatcher polish in one PR.
+- **Don't `git add .`.** Stage only files you actually changed. Avoids accidentally committing `bun.lock`, `.env`, screenshot dumps, etc.
+- **Never `git push --force` to `main`.** Only `--force-with-lease` to your own feature branch on your fork.
+- **Never `git commit --amend` to a published commit.** Create a new commit instead.
+- **Don't reformat files you didn't change.** Keep diffs reviewable.
+
+If a step fails (auth, conflict, hook failure) — investigate the root cause, don't bypass with `--no-verify` or destructive resets.
 
 ## When in doubt
 

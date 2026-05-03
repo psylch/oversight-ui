@@ -1,6 +1,19 @@
 # Onboarding & Contribution Guide
 
-> **Hi Niti** — this doc gets you (and your AI coding assistant) from zero to "PR opened" in about 20 minutes. You can also paste this entire file into Claude / Cursor / any AI coding tool and say *"follow this guide step by step"* — it's written so the agent can drive most of it for you.
+> **Hi Niti** — this doc gets you (and your AI coding assistant) from zero to "PR opened" in about 20 minutes.
+
+## The easiest way to use this guide
+
+This repo ships with a `CLAUDE.md` at the root. Modern AI coding tools (Claude Code, Cursor, Windsurf, Copilot, etc.) **automatically read `CLAUDE.md`** when you open the project folder — so the agent already knows the architecture, the rules, the git workflow, and what's allowed before you ask it anything.
+
+**Recommended flow:**
+
+1. Do steps 1–2 below (fork + clone the repo locally).
+2. Open the cloned `oversight-ui/` folder in your AI coding tool of choice (run `claude` from inside the folder, or just "Open Folder" in Cursor).
+3. Say something like: *"I want to contribute. Read CLAUDE.md and docs/CONTRIBUTING.md, then walk me through making my first change."*
+4. The agent picks it up from there — installs deps, runs the dev server, helps you make the edit, drives the commit + PR.
+
+If you'd rather drive it manually or just read along first, the rest of this guide is self-contained.
 
 ---
 
