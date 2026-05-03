@@ -82,16 +82,22 @@ input, textarea, select { font: inherit; color: inherit; }
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 65% 50% at 50% 22%, oklch(0.18 0.05 280 / 0.55), transparent 65%),
-    radial-gradient(ellipse 90% 70% at 22% 90%, oklch(0.13 0.05 295 / 0.42), transparent 65%),
-    linear-gradient(180deg, var(--void-2), var(--void) 35%, var(--void) 100%);
+    /* top-center, brand purple — primary breath */
+    radial-gradient(ellipse 70% 55% at 50% 18%, oklch(0.20 0.06 280 / 0.55), transparent 70%),
+    /* bottom-left, deeper violet — anchor */
+    radial-gradient(ellipse 80% 60% at 18% 92%, oklch(0.16 0.05 295 / 0.45), transparent 72%),
+    /* far right, cool teal hint — quiet color counterweight */
+    radial-gradient(ellipse 55% 65% at 95% 55%, oklch(0.16 0.035 215 / 0.32), transparent 72%),
+    /* base wash */
+    linear-gradient(180deg, var(--void-2), var(--void) 45%, var(--void) 100%);
   pointer-events: none;
 }
 .environment::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 50%, transparent 0%, rgba(0,0,0,0.42) 80%, rgba(0,0,0,0.65) 100%);
+  /* softer vignette — keep edges from crushing to pure black */
+  background: radial-gradient(ellipse 95% 85% at 50% 50%, transparent 40%, rgba(0,0,0,0.25) 88%, rgba(0,0,0,0.42) 100%);
   pointer-events: none;
 }
 .grain {
