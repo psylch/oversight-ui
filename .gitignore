@@ -1,5 +1,11 @@
 node_modules/
 dist/
+
+# Lockfile policy: package-lock.json is the committed lockfile (default for npm-based contributors).
+# bun.lock is local-only — chihao runs `bun install` locally; the file is generated on demand.
+bun.lock
+yarn.lock
+pnpm-lock.yaml
 .DS_Store
 .vscode/
 .idea/
