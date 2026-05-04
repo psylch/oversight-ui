@@ -78,6 +78,21 @@ export function readState(): Readonly<State> {
   return snapshot
 }
 
+// Wipe the store back to first-mount state. Used by the "Replay demo" action
+// in OsBar so a presenter can return the page to cold start without reload.
+export function resetStore() {
+  state.agents.clear()
+  state.openDecisions = []
+  state.claims = []
+  state.artifacts.clear()
+  state.chatMessages = []
+  state.runs.clear()
+  state.activity = []
+  state.selectedAgentId = null
+  state.seenSeqs.clear()
+  emit()
+}
+
 function pushActivity(item: AgentActivityItem) {
   state.activity.push(item)
   if (state.activity.length > 500) {

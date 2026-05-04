@@ -17,6 +17,7 @@ import {
   applyEvent,
   applyEvents,
   readState,
+  resetStore,
   setWsConnected,
   type AgentActivityItem
 } from "./store"
@@ -190,6 +191,35 @@ function bootScenario() {
     setTimeout(fn, t * DEMO_PACE)
     t += 2200
   }
+}
+
+// "Replay demo" — clears the store, then auto-walks the cold-start arc:
+// dispatch Research Analyst → wait for the scripted decision to land
+// → auto-approve. ~16s end-to-end. Used by the Demo button in OsBar so
+// a presenter can rewind without reloading the page.
+let demoFlowRunning = false
+export function runDemoFlow() {
+  if (demoFlowRunning) return
+  demoFlowRunning = true
+  resetStore()
+  setWsConnected(true)
+
+  // small pause so the empty dispatch hub registers visually
+  setTimeout(() => {
+    const agentId = dispatchAgent({
+      display_name: "Research · research",
+      intent: "Pull and verify sources for the current brief",
+      preset: "research-analyst"
+    })
+
+    // wait for the scripted decision to land (12s after dispatch),
+    // then auto-approve so the audience sees the close-loop
+    setTimeout(() => {
+      const open = readState().openDecisions.find((d) => d.agent_id === agentId)
+      if (open) sendAction(open.decision_id, "approve")
+      demoFlowRunning = false
+    }, 13500 * DEMO_PACE)
+  }, 1200 * DEMO_PACE)
 }
 
 let started = false

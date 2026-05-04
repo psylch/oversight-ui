@@ -1608,116 +1608,109 @@ html, body, #root {
 }
 
 /* ============================================================
-   DISPATCH HUB — empty-state cold start
-   Replaces the passive "All quiet" placeholder with a primary
-   surface for dispatching agents (and a secondary CLI register
-   path for watching agents already running elsewhere).
+   COLD START — empty state rendered as a real .card
+   Reuses the dossier card primitives (.card / .card-meta /
+   .card-title / .card-rec / .card-evidence / .ev-card / .card-default)
+   so the empty stage reads as the same material as a populated one.
+   Only the bits below are overrides on top of those primitives.
    ============================================================ */
 
-.dispatch-hub {
-  align-self: center;
+.cold-start-card {
   width: 100%;
-  max-width: 720px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  padding: 40px 24px;
-}
-
-.dispatch-hub-head {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dispatch-hub-head h1 {
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: -0.012em;
-  color: var(--ink-1);
-  text-wrap: balance;
-}
-.dispatch-hub-head p {
-  font-size: 14px;
-  color: var(--ink-2);
-  max-width: 480px;
-  line-height: 1.6;
+  max-width: 640px;
   margin: 0 auto;
 }
 
-.dispatch-hub-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.cold-start-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.dispatch-hub-card {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 14px;
-  background: linear-gradient(180deg, var(--card-2), var(--card));
-  border: 1px solid var(--hair);
-  border-radius: var(--radius-md);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+.cold-start-row {
+  grid-template-columns: 28px 1fr 14px;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 14px;
 }
-.dispatch-hub-card:hover {
-  border-color: var(--hair-strong);
-  transform: translateY(-1px);
-  box-shadow: 0 22px 46px -18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+.cold-start-row .badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
 }
-.dispatch-hub-card:active { transform: scale(0.99); }
-.dispatch-hub-card:focus-visible { outline: 2px solid var(--c-action); outline-offset: 2px; }
-.dispatch-hub-card .preset-avatar {
-  width: 36px;
-  height: 36px;
-  font-size: 14px;
-}
-.dispatch-hub-card-copy {
+.cold-start-row-copy {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
 }
-.dispatch-hub-card-name {
-  font-size: 13.5px;
+.cold-start-row-name {
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink-1);
   letter-spacing: -0.005em;
 }
-.dispatch-hub-card-desc {
-  font-size: 12px;
-  line-height: 1.5;
+.cold-start-row-desc {
+  font-size: 11.5px;
   color: var(--ink-3);
-  text-wrap: pretty;
+  line-height: 1.5;
+  white-space: normal;
+}
+.cold-start-row .ext {
+  color: var(--ink-3);
+  transition: color 0.15s, transform 0.15s;
+}
+.cold-start-row:hover .ext {
+  color: var(--c-action);
+  transform: translateX(2px);
 }
 
-.dispatch-hub-cli {
+/* Tier-colored badge backgrounds — stay inside the v7 semantic palette */
+.cold-start-row .badge.tier-cyan {
+  color: var(--c-deco-2);
+  background: var(--c-deco-2-soft);
+  border-color: var(--c-deco-2-edge);
+}
+.cold-start-row .badge.tier-violet {
+  color: var(--c-deco-1);
+  background: var(--c-deco-1-soft);
+  border-color: var(--c-deco-1-edge);
+}
+.cold-start-row .badge.tier-amber {
+  color: oklch(0.74 0.14 60);
+  background: oklch(0.18 0.07 60 / 0.4);
+  border-color: oklch(0.5 0.14 60 / 0.42);
+}
+.cold-start-row .badge.tier-green {
+  color: oklch(0.72 0.13 145);
+  background: oklch(0.18 0.06 145 / 0.4);
+  border-color: oklch(0.5 0.14 145 / 0.42);
+}
+
+/* CLI hint — sticky bottom row, reuses .card-actions container */
+.cold-start-cli-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 24px 16px;
 }
-.dispatch-hub-cli-label {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+.cold-start-cli-row .lab {
+  font-family: var(--sans);
+  font-size: 12px;
   color: var(--ink-3);
+  letter-spacing: 0.02em;
 }
-.dispatch-hub-cli-block {
+.cold-start-cli-snippet {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
   background: var(--row);
   border: 1px solid var(--hair);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--ink-2);
-  overflow-x: auto;
+  padding: 4px 9px;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
 }
 
 /* Header icon button — hover tip (uses data-tip attribute) */

@@ -185,44 +185,59 @@ const DISPATCH_PRESETS: DispatchPreset[] = [
 function CenterEmpty(_props: { counter: string; calm: boolean }) {
   return (
     <section className="center no-eyebrow">
-      <div className="dispatch-hub">
-        <header className="dispatch-hub-head">
-          <h1>Start the morning.</h1>
-          <p>Dispatch an agent on a task — or connect one already running in your terminal.</p>
-        </header>
+      <article className="card cold-start-card">
+        <div className="card-scroll">
+          <header className="card-meta">
+            <span className="agent">Empty lane</span>
+            <span className="sep">·</span>
+            <span>Morning start</span>
+            <span className="pill fyi">Cold start</span>
+          </header>
 
-        <div className="dispatch-hub-grid">
-          {DISPATCH_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="dispatch-hub-card"
-              onClick={async () => {
-                const { dispatchAgent } = await import("../demo-runtime")
-                dispatchAgent({
-                  display_name: `${p.name.split(" ")[0]} · ${p.id.split("-")[0]}`,
-                  intent: p.goal,
-                  preset: p.id
-                })
-              }}
-            >
-              <span className={`preset-avatar ${p.color}`}>{p.mark}</span>
-              <span className="dispatch-hub-card-copy">
-                <span className="dispatch-hub-card-name">{p.name}</span>
-                <span className="dispatch-hub-card-desc">{p.description}</span>
-              </span>
-            </button>
-          ))}
+          <h2 className="card-title">Dispatch your first agent.</h2>
+
+          <p className="card-rec">
+            Pick a template — or connect an agent already running in your terminal. Dispatched
+            agents stream into the queue; their decisions land here.
+          </p>
+
+          <section className="card-evidence cold-start-templates">
+            <header className="card-evidence-head">
+              <span className="card-evidence-label">Templates</span>
+              <span className="card-evidence-num">{DISPATCH_PRESETS.length}</span>
+            </header>
+            <div className="cold-start-list">
+              {DISPATCH_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="ev-card cold-start-row"
+                  onClick={async () => {
+                    const { dispatchAgent } = await import("../demo-runtime")
+                    dispatchAgent({
+                      display_name: `${p.name.split(" ")[0]} · ${p.id.split("-")[0]}`,
+                      intent: p.goal,
+                      preset: p.id
+                    })
+                  }}
+                >
+                  <span className={`badge tier-${p.color}`}>{p.mark}</span>
+                  <span className="cold-start-row-copy">
+                    <span className="cold-start-row-name">{p.name}</span>
+                    <span className="cold-start-row-desc">{p.description}</span>
+                  </span>
+                  <span className="ext">{ICON_ARROW}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
-        <div className="dispatch-hub-cli">
-          <div className="dispatch-hub-cli-label">Or watch an agent already running:</div>
-          <pre className="dispatch-hub-cli-block">
-            <code>{`$ npm install -g @oversight/cli
-$ oversight register --runtime claude`}</code>
-          </pre>
-        </div>
-      </div>
+        <footer className="card-actions cold-start-cli-row">
+          <span className="lab">Or watch an agent already running</span>
+          <code className="cold-start-cli-snippet">$ oversight register --runtime claude</code>
+        </footer>
+      </article>
     </section>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAgents, useOpenDecisions, useWsConnected } from "../store"
+import { runDemoFlow } from "../demo-runtime"
 
 function formatStamp(d: Date): string {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -50,6 +51,17 @@ export function OsBar({
         <span className="meta">{formatStamp(now)}</span>
       </div>
       <div className="header-right">
+        <button
+          className="header-icon-btn has-tip"
+          type="button"
+          aria-label="Replay demo"
+          data-tip="Replay demo"
+          onClick={() => runDemoFlow()}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="6 4 20 12 6 20 6 4" />
+          </svg>
+        </button>
         <button className="header-icon-btn" type="button" aria-label="Search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
