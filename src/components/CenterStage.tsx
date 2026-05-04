@@ -431,6 +431,12 @@ interface DossierProps {
 
 function DossierCard(p: DossierProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [flash, setFlash] = useState<null | "approve" | "reject">(null)
+  useEffect(() => {
+    if (!flash) return
+    const t = setTimeout(() => setFlash(null), 700)
+    return () => clearTimeout(t)
+  }, [flash])
 
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -452,7 +458,7 @@ function DossierCard(p: DossierProps) {
 
   return (
     <section className="center no-eyebrow">
-      <article className="card">
+      <article className={`card${flash ? ` flash-${flash}` : ""}`}>
        <div className="card-scroll" ref={scrollRef}>
         <header className="card-meta">
           <span className="agent">{p.meta.agent}</span>
@@ -536,17 +542,21 @@ function DossierCard(p: DossierProps) {
        </div>
 
         <footer className="card-actions">
-          <button type="button" className="btn primary" onClick={p.onPrimary}>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => { setFlash("approve"); p.onPrimary() }}
+          >
             {ICON_CHECK}
             {p.primaryLabel}
           </button>
-          <button type="button" className="btn danger" onClick={p.onReject}>
+          <button
+            type="button"
+            className="btn danger"
+            onClick={() => { setFlash("reject"); p.onReject() }}
+          >
             {ICON_REJECT}
             {p.rejectLabel ?? "Reject"}
-          </button>
-          <button type="button" className="btn ghost" onClick={p.onChat}>
-            {ICON_CHAT}
-            Chat with agent
           </button>
         </footer>
       </article>

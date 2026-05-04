@@ -257,8 +257,8 @@ export function sendAction(decisionId: string, actionId: string) {
       ownerId,
       "system",
       actionId === "approve"
-        ? "Decision approved — action queued for downstream."
-        : "Decision rejected — agent paused for direction."
+        ? "Approved. Action queued downstream."
+        : "Rejected. Agent paused — next step required from you."
     )
   )
 }
