@@ -240,6 +240,15 @@ function bootScenario() {
   }
 }
 
+// "Load populated demo" — clears the store and replays the boot scenario
+// so a presenter can flip from the cold-start hub straight into the busy
+// dashboard (Nash's Plaid card + Morrow's permission card + 6 lanes).
+export function loadPopulatedDemo() {
+  resetStore()
+  setWsConnected(true)
+  setTimeout(bootScenario, 60)
+}
+
 // "Replay demo" — clears the store, then auto-walks the cold-start arc:
 // dispatch Research Analyst → wait for the scripted decision to land
 // → auto-approve. ~16s end-to-end. Used by the Demo button in OsBar so

@@ -397,6 +397,16 @@ function CenterEmpty(_props: { counter: string; calm: boolean }) {
         <footer className="card-actions cold-start-cli-row">
           <span className="lab">Or watch an agent already running</span>
           <code className="cold-start-cli-snippet">$ oversight register --runtime claude</code>
+          <button
+            type="button"
+            className="cold-start-load-demo"
+            onClick={async () => {
+              const { loadPopulatedDemo } = await import("../demo-runtime")
+              loadPopulatedDemo()
+            }}
+          >
+            Load full demo →
+          </button>
         </footer>
       </article>
     </section>

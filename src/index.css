@@ -2028,3 +2028,26 @@ html, body, #root {
   88%  { opacity: 1; transform: translate(-50%, 0); }
   100% { opacity: 0; transform: translate(-50%, 4px); }
 }
+
+/* Cold-start hub: secondary "Load full demo" link in the footer row */
+.cold-start-load-demo {
+  margin-left: auto;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: oklch(0.74 0.14 245);
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: color 0.15s, transform 0.15s;
+}
+.cold-start-load-demo:hover {
+  color: oklch(0.82 0.14 245);
+  transform: translateX(2px);
+}
+.cold-start-load-demo:focus-visible {
+  outline: 2px solid var(--c-action);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
