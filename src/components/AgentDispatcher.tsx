@@ -1,40 +1,31 @@
 import { useEffect, useRef, useState } from "react"
 import { setSelectedAgent } from "../store"
+import { AgentAvatar } from "./AgentAvatar"
 
 interface AgentPreset {
   id: string
   name: string
   description: string
-  mark: string
-  color: "cyan" | "violet" | "amber" | "green"
 }
 
 const PRESETS: AgentPreset[] = [
   {
     id: "research-analyst",
-    mark: "R",
-    color: "cyan",
     name: "Research Analyst",
     description: "Finds sources, checks claims, returns evidence-backed notes."
   },
   {
     id: "writing-partner",
-    mark: "W",
-    color: "violet",
     name: "Writing Partner",
     description: "Turns rough direction into structured drafts; pauses at forks."
   },
   {
     id: "qa-reviewer",
-    mark: "Q",
-    color: "amber",
     name: "QA Reviewer",
     description: "Reproduces issues concretely and verifies fixes."
   },
   {
     id: "project-scout",
-    mark: "S",
-    color: "green",
     name: "Project Scout",
     description: "Maps a workspace, builds context, proposes the next move."
   }
@@ -146,7 +137,9 @@ export function AgentDispatcher({ open, onClose }: AgentDispatcherProps) {
                   className={`preset-card ${presetId === preset.id ? "selected" : ""}`}
                   onClick={() => setPresetId(preset.id)}
                 >
-                  <span className={`preset-avatar ${preset.color}`}>{preset.mark}</span>
+                  <span className="preset-avatar">
+                    <AgentAvatar agentId={preset.id} size="md" />
+                  </span>
                   <span className="preset-copy">
                     <span className="preset-name">{preset.name}</span>
                     <span className="preset-desc">{preset.description}</span>

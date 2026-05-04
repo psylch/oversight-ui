@@ -20,6 +20,7 @@ import {
 } from "../store"
 import { sendAction } from "../demo-runtime"
 import { SourcePreview } from "./SourcePreview"
+import { AgentAvatar } from "./AgentAvatar"
 
 function formatRemaining(seconds: number): string {
   if (seconds <= 0) return "00:00"
@@ -91,6 +92,7 @@ const ICON_SHIELD = (
 )
 
 const DEMO_DECISION = {
+  agentId: "agent_nash",
   agent: "Nash · research",
   ts: "22:14 UTC",
   category: "Brief approval",
@@ -526,6 +528,7 @@ export function CenterStage() {
     <>
     <DossierCard
       meta={{
+        agentId: decision.agent_id,
         agent: agent?.display_name ?? decision.agent_id,
         ts: formatTimeUtc(decision.ts),
         category: decision.headline.length > 40 ? "Decision" : decision.headline,
@@ -589,6 +592,9 @@ function AgentAtWorkCard({ agent }: { agent: import("../types").AgentStateEvent 
   return (
     <section className="center no-eyebrow">
       <article className="card agent-at-work">
+        <span className="card-sticker">
+          <AgentAvatar agentId={agent.agent_id} size="md" title={agent.display_name} />
+        </span>
         <div className="card-scroll">
           <header className="card-meta">
             <span className="agent">{agent.display_name}</span>
@@ -637,6 +643,7 @@ function formatElapsed(ms: number): string {
 }
 
 interface DossierMeta {
+  agentId: string
   agent: string
   ts: string
   category: string
@@ -701,6 +708,9 @@ function DossierCard(p: DossierProps) {
   return (
     <section className="center no-eyebrow">
       <article className={`card${flash ? ` flash-${flash}` : ""}`}>
+       <span className="card-sticker">
+         <AgentAvatar agentId={p.meta.agentId} size="md" title={p.meta.agent} />
+       </span>
        <div className="card-scroll" ref={scrollRef}>
         <header className="card-meta">
           <span className="agent">{p.meta.agent}</span>
@@ -798,6 +808,7 @@ export function DemoDossier() {
   return (
     <DossierCard
       meta={{
+        agentId: DEMO_DECISION.agentId,
         agent: DEMO_DECISION.agent,
         ts: DEMO_DECISION.ts,
         category: DEMO_DECISION.category,

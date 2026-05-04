@@ -9,6 +9,7 @@ import {
   useSelectedAgentId,
   useStore
 } from "../store"
+import { AgentAvatar } from "./AgentAvatar"
 
 type Tab = "audit" | "chat" | "files"
 
@@ -50,14 +51,6 @@ function formatTime(ts: number): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
 
-function initials(name: string): string {
-  const parts = name.split(/\s|·|-/).filter(Boolean)
-  if (parts.length === 0) return "?"
-  if (parts.length === 1) return (parts[0] ?? "?").slice(0, 2).toUpperCase()
-  const a = parts[0]?.[0] ?? "?"
-  const b = parts[1]?.[0] ?? ""
-  return (a + b).toUpperCase()
-}
 
 
 function fileKindFor(location: string): { kind: string; label: string } {
@@ -180,8 +173,18 @@ export function OpsPanel() {
             ) : (
               chatMessages.map((m: ChatMessageEvent) => (
                 <button key={m.seq} type="button" className="chat-row">
-                  <div className={`chat-avatar${m.role === "user" ? " user" : ""}`}>
-                    {m.role === "user" ? "ME" : initials(agent?.display_name ?? "Agent")}
+                  <div
+                    className={`chat-avatar${m.role === "user" ? " user" : " identity"}`}
+                  >
+                    {m.role === "user" ? (
+                      "ME"
+                    ) : (
+                      <AgentAvatar
+                        agentId={agent?.agent_id ?? "unknown"}
+                        size="sm"
+                        title={agent?.display_name}
+                      />
+                    )}
                   </div>
                   <div className="chat-content">
                     <div className="top">
