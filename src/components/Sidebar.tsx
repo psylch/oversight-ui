@@ -5,6 +5,7 @@ import {
   useOpenDecisions,
   useSelectedAgentId
 } from "../store"
+import { AgentAvatar } from "./AgentAvatar"
 
 function formatElapsed(ms: number): string {
   if (ms < 1000) return "0s"
@@ -20,6 +21,7 @@ function formatElapsed(ms: number): string {
 }
 
 interface RowProps {
+  agentId: string
   name: string
   sub: string
   elapsed: string
@@ -28,7 +30,7 @@ interface RowProps {
   onClick: () => void
 }
 
-function Row({ name, sub, elapsed, selected, variant = "needs", onClick }: RowProps) {
+function Row({ agentId, name, sub, elapsed, selected, variant = "needs", onClick }: RowProps) {
   const cls = ["queue-row"]
   if (selected) {
     cls.push("selected")
@@ -36,7 +38,8 @@ function Row({ name, sub, elapsed, selected, variant = "needs", onClick }: RowPr
   }
   return (
     <button type="button" className={cls.join(" ")} onClick={onClick}>
-      <div>
+      <AgentAvatar agentId={agentId} size="sm" title={name} />
+      <div className="queue-row-text">
         <div className="name">{name}</div>
         <div className="sub">{sub}</div>
       </div>
@@ -58,6 +61,7 @@ function AgentRow({
 }) {
   return (
     <Row
+      agentId={agent.agent_id}
       name={agent.display_name}
       sub={sub}
       elapsed={formatElapsed(agent.elapsed_ms)}

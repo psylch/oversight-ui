@@ -52,32 +52,32 @@ export interface AgentIdentity {
 }
 
 const COLORS = [
-  "#a8ff7a",
-  "#ffc8d8",
-  "#a9e3ff",
-  "#ffd56a",
-  "#c7b5ff",
-  "#8ff2c7",
-  "#ff9a8c",
-  "#7ea7ff"
+  "#7dff3a", // lime
+  "#ff5c8a", // pink
+  "#3fb6ff", // sky
+  "#ffb524", // amber
+  "#9b7dff", // violet
+  "#3fd9a0", // mint
+  "#ff6b58", // coral
+  "#4d7fff"  // blue
 ] as const
 
 // Deliberate identity assignments for the 6 demo agents + 4 dispatcher presets.
 // Pairings reflect each agent's role and current state in the demo scenario.
 const CATALOG: Record<string, AgentIdentity> = {
   // 6 demo agents
-  agent_nash: { color: "#ffd56a", shape: "rounded-clover", expression: "concerned" },
-  agent_morrow: { color: "#7ea7ff", shape: "soft-spark", expression: "skeptical" },
-  agent_corwin: { color: "#c7b5ff", shape: "puffy-star", expression: "focused" },
-  agent_harlow: { color: "#a8ff7a", shape: "soft-spark", expression: "confident" },
-  agent_tilden: { color: "#a9e3ff", shape: "bubble-star", expression: "curious" },
-  agent_bain: { color: "#8ff2c7", shape: "mint-flower", expression: "calm" },
+  agent_nash: { color: "#ffb524", shape: "rounded-clover", expression: "concerned" },
+  agent_morrow: { color: "#4d7fff", shape: "soft-spark", expression: "skeptical" },
+  agent_corwin: { color: "#9b7dff", shape: "puffy-star", expression: "focused" },
+  agent_harlow: { color: "#7dff3a", shape: "soft-spark", expression: "confident" },
+  agent_tilden: { color: "#3fb6ff", shape: "bubble-star", expression: "curious" },
+  agent_bain: { color: "#3fd9a0", shape: "mint-flower", expression: "calm" },
 
   // Dispatcher presets
-  "research-analyst": { color: "#a9e3ff", shape: "puffy-star", expression: "curious" },
-  "writing-partner": { color: "#c7b5ff", shape: "bubble-star", expression: "cheerful" },
-  "qa-reviewer": { color: "#ffd56a", shape: "rounded-clover", expression: "focused" },
-  "project-scout": { color: "#a8ff7a", shape: "soft-spark", expression: "confident" }
+  "research-analyst": { color: "#3fb6ff", shape: "puffy-star", expression: "curious" },
+  "writing-partner": { color: "#9b7dff", shape: "bubble-star", expression: "cheerful" },
+  "qa-reviewer": { color: "#ffb524", shape: "rounded-clover", expression: "focused" },
+  "project-scout": { color: "#7dff3a", shape: "soft-spark", expression: "confident" }
 }
 
 const SHAPE_KEYS = Object.keys(SHAPES) as ShapeKey[]
