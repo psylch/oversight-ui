@@ -247,9 +247,9 @@ function ShapeComparison({ data }: { data: ShapePayloadComparison }) {
     <div className={`cmp-side${picked ? " picked" : ""}`}>
       <div className="cmp-head">
         <span className="cmp-tag">Option {side}</span>
-        {picked && <span className="cmp-pick-flag">Recommended</span>}
       </div>
       <div className="cmp-title">{opt.title}</div>
+      {picked && <div className="cmp-pick-reason">{data.pickReason}</div>}
       <dl className="cmp-metrics">
         {opt.metrics.map((m) => (
           <div className="cmp-metric" key={m.k}>
@@ -262,17 +262,11 @@ function ShapeComparison({ data }: { data: ShapePayloadComparison }) {
   )
   return (
     <div className="shape shape-comparison">
-      <div className="cmp-grid">
+      <div className={`cmp-grid pick-${data.pick.toLowerCase()}`}>
         <Side side="A" opt={data.optionA} picked={data.pick === "A"} />
-        <div className="cmp-versus" aria-hidden="true">
-          <span>vs</span>
-        </div>
+        <div className="cmp-divider" aria-hidden="true" />
         <Side side="B" opt={data.optionB} picked={data.pick === "B"} />
       </div>
-      <p className="cmp-reason">
-        <span className="cmp-reason-lab">Pick · {data.pick}</span>
-        <span>{data.pickReason}</span>
-      </p>
     </div>
   )
 }
@@ -320,11 +314,9 @@ function ShapeInspection({ data }: { data: ShapePayloadInspection }) {
       <ul className="insp-checks">
         {data.checks.map((c, i) => (
           <li key={i} className={`insp-check${c.ok ? " ok" : " fail"}`}>
-            <span className="insp-check-mark" aria-hidden="true">
-              {c.ok ? ICON_CHECK : ICON_REJECT}
-            </span>
             <span className="insp-check-label">{c.label}</span>
             <span className="insp-check-result">{c.result}</span>
+            <span className="insp-check-tag" aria-hidden="true">{c.ok ? "OK" : "FAIL"}</span>
           </li>
         ))}
       </ul>
@@ -333,21 +325,8 @@ function ShapeInspection({ data }: { data: ShapePayloadInspection }) {
   )
 }
 
-function renderShape(shape: DecisionShape | undefined, payload: ShapePayload | undefined) {
-  if (!payload) {
-    if (shape === "replace" || !shape) {
-      return (
-        <ShapeReplace
-          data={{
-            existingText: "—",
-            suggestionText: "—",
-            actionText: "—"
-          }}
-        />
-      )
-    }
-    return null
-  }
+function renderShape(_shape: DecisionShape | undefined, payload: ShapePayload | undefined) {
+  if (!payload) return null
   switch (payload.kind) {
     case "replace":
       return <ShapeReplace data={payload} />
@@ -357,6 +336,10 @@ function renderShape(shape: DecisionShape | undefined, payload: ShapePayload | u
       return <ShapeDiff data={payload} />
     case "inspection":
       return <ShapeInspection data={payload} />
+    default: {
+      const _exhaustive: never = payload
+      return _exhaustive
+    }
   }
 }
 
@@ -459,7 +442,7 @@ export function CenterStage() {
   const flashToast = (msg: string) => {
     setToast(msg)
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), 2000)
+    toastTimer.current = setTimeout(() => setToast(null), 2200)
   }
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -628,12 +611,6 @@ function AgentAtWorkCard({ agent }: { agent: import("../types").AgentStateEvent 
           </div>
         </div>
 
-        <footer className="card-actions atwork-actions">
-          <button type="button" className="btn ghost" onClick={() => {}}>
-            {ICON_CLOCK}
-            Watch
-          </button>
-        </footer>
       </article>
     </section>
   )
