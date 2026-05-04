@@ -16,7 +16,6 @@ export function OsBar({
   onDispatch
 }: {
   onDispatch: () => void
-  notificationCount: number
 }) {
   const connected = useWsConnected()
   const agentCount = useAgents().length
