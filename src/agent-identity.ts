@@ -49,6 +49,27 @@ export interface AgentIdentity {
   color: string
   shape: ShapeKey
   expression: ExpressionKey
+  /** oklch hue (0–360) — derived from `color`, exposed for the ambient atmosphere */
+  ambientHue: number
+}
+
+// sRGB hex → Oklab hue (degrees). Single source of truth for "what color is
+// this agent": edit `color` and ambient hue follows automatically.
+function hexToOklchHue(hex: string): number {
+  const m = hex.replace("#", "")
+  const r = parseInt(m.slice(0, 2), 16) / 255
+  const g = parseInt(m.slice(2, 4), 16) / 255
+  const b = parseInt(m.slice(4, 6), 16) / 255
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4))
+  const lr = lin(r), lg = lin(g), lb = lin(b)
+  const l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+  const mm = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+  const s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+  const l_ = Math.cbrt(l), m_ = Math.cbrt(mm), s_ = Math.cbrt(s)
+  const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+  const bb = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+  const h = (Math.atan2(bb, a) * 180) / Math.PI
+  return h < 0 ? h + 360 : h
 }
 
 const COLORS = [
@@ -64,7 +85,9 @@ const COLORS = [
 
 // Deliberate identity assignments for the 6 demo agents + 4 dispatcher presets.
 // Pairings reflect each agent's role and current state in the demo scenario.
-const CATALOG: Record<string, AgentIdentity> = {
+type CatalogEntry = Omit<AgentIdentity, "ambientHue">
+
+const CATALOG: Record<string, CatalogEntry> = {
   // 6 demo agents
   agent_nash: { color: "#ffb524", shape: "rounded-clover", expression: "concerned" },
   agent_morrow: { color: "#4d7fff", shape: "soft-spark", expression: "skeptical" },
@@ -94,11 +117,13 @@ function hash(str: string): number {
 
 export function getIdentity(agentId: string): AgentIdentity {
   const hit = CATALOG[agentId]
-  if (hit) return hit
+  if (hit) return { ...hit, ambientHue: hexToOklchHue(hit.color) }
   const h = hash(agentId || "anon")
+  const color = COLORS[h % COLORS.length]!
   return {
-    color: COLORS[h % COLORS.length]!,
+    color,
     shape: SHAPE_KEYS[(h >> 3) % SHAPE_KEYS.length]!,
-    expression: EXPRESSION_KEYS[(h >> 7) % EXPRESSION_KEYS.length]!
+    expression: EXPRESSION_KEYS[(h >> 7) % EXPRESSION_KEYS.length]!,
+    ambientHue: hexToOklchHue(color)
   }
 }

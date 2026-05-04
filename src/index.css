@@ -81,20 +81,27 @@ input, textarea, select { font: inherit; color: inherit; }
 /* ============================================================
    ATMOSPHERE
    ============================================================ */
+@property --amb-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 280;
+}
 .environment {
   position: fixed;
   inset: 0;
   z-index: 0;
+  --amb-hue: 280;
   background:
-    /* top-center, brand purple — primary breath */
-    radial-gradient(ellipse 70% 55% at 50% 18%, oklch(0.20 0.06 280 / 0.55), transparent 70%),
-    /* bottom-left, deeper violet — anchor */
-    radial-gradient(ellipse 80% 60% at 18% 92%, oklch(0.16 0.05 295 / 0.45), transparent 72%),
-    /* far right, cool teal hint — quiet color counterweight */
+    /* top-center, primary breath — hue follows selected agent */
+    radial-gradient(ellipse 70% 55% at 50% 18%, oklch(0.20 0.06 var(--amb-hue) / 0.55), transparent 70%),
+    /* bottom-left, deeper anchor — slightly offset hue, follows agent */
+    radial-gradient(ellipse 80% 60% at 18% 92%, oklch(0.16 0.05 calc(var(--amb-hue) + 15) / 0.45), transparent 72%),
+    /* far right, cool teal counterweight — stays put for stability */
     radial-gradient(ellipse 55% 65% at 95% 55%, oklch(0.16 0.035 215 / 0.32), transparent 72%),
     /* base wash */
     linear-gradient(180deg, var(--void-2), var(--void) 45%, var(--void) 100%);
   pointer-events: none;
+  transition: --amb-hue 900ms ease;
 }
 .environment::after {
   content: "";
