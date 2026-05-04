@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Identity Preview</title>
+    <style>
+      :root {
+        color: #2f2a35;
+        background: #fbfaf7;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 48px;
+        background:
+          radial-gradient(circle at 16% 12%, rgba(168, 255, 122, 0.24), transparent 30%),
+          radial-gradient(circle at 86% 8%, rgba(169, 227, 255, 0.28), transparent 32%),
+          #fbfaf7;
+      }
+
+      main {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .meta {
+        margin: 10px 0 0;
+        max-width: 560px;
+        color: #706a75;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .palette {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .swatch {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        box-shadow:
+          inset 0 0 0 1px rgba(47, 42, 53, 0.08),
+          0 8px 18px rgba(47, 42, 53, 0.1);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        min-height: 214px;
+        padding: 22px 18px 18px;
+        border: 1px solid rgba(47, 42, 53, 0.1);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.74);
+        box-shadow: 0 18px 48px rgba(47, 42, 53, 0.08);
+      }
+
+      .avatar {
+        position: relative;
+        width: 124px;
+        height: 124px;
+        margin: 0 auto 18px;
+      }
+
+      .shape {
+        position: absolute;
+        inset: 0;
+        background: var(--agent-color);
+        mask: var(--shape-url) center / contain no-repeat;
+        -webkit-mask: var(--shape-url) center / contain no-repeat;
+        filter: drop-shadow(0 14px 20px rgba(47, 42, 53, 0.1));
+      }
+
+      .face {
+        position: absolute;
+        left: calc(50% + var(--face-x, 0px));
+        top: calc(50% + var(--face-y, 4px));
+        width: var(--face-w, 82px);
+        height: var(--face-h, 82px);
+        transform: translate(-50%, -50%);
+        mix-blend-mode: multiply;
+        object-fit: contain;
+      }
+
+      .label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .name {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .parts {
+        margin: 7px 0 0;
+        color: #7f7883;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .chip {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--agent-color);
+        box-shadow: inset 0 0 0 1px rgba(47, 42, 53, 0.08);
+      }
+
+      @media (max-width: 920px) {
+        body {
+          padding: 28px;
+        }
+
+        header {
+          display: block;
+        }
+
+        .palette {
+          margin-top: 22px;
+          flex-wrap: wrap;
+        }
+
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 560px) {
+        body {
+          padding: 18px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Agent identity combinations</h1>
+          <p class="meta">
+            Temporary visual artifact combining code-generated soft star SVGs,
+            PNG-extracted expression SVGs, and the friendly candy palette.
+          </p>
+        </div>
+        <div class="palette" aria-label="Agent color palette">
+          <span class="swatch" style="background: #a8ff7a"></span>
+          <span class="swatch" style="background: #ffc8d8"></span>
+          <span class="swatch" style="background: #a9e3ff"></span>
+          <span class="swatch" style="background: #ffd56a"></span>
+          <span class="swatch" style="background: #c7b5ff"></span>
+          <span class="swatch" style="background: #8ff2c7"></span>
+          <span class="swatch" style="background: #ff9a8c"></span>
+          <span class="swatch" style="background: #7ea7ff"></span>
+        </div>
+      </header>
+
+      <section class="grid" aria-label="Agent identity previews">
+        <article class="card" style="--agent-color: #a8ff7a; --shape-url: url('../src/assets/agent-identities/shapes/soft-spark.svg'); --face-w: 76px; --face-h: 66px; --face-y: 5px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/confident.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Navigator</p>
+              <p class="parts">soft spark + confident</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #a9e3ff; --shape-url: url('../src/assets/agent-identities/shapes/puffy-star.svg'); --face-w: 72px; --face-h: 72px; --face-y: 5px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/curious.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Researcher</p>
+              <p class="parts">puffy star + curious</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #ffd56a; --shape-url: url('../src/assets/agent-identities/shapes/rounded-clover.svg'); --face-w: 76px; --face-h: 66px; --face-y: 5px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/focused.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Operator</p>
+              <p class="parts">rounded clover + focused</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #ffc8d8; --shape-url: url('../src/assets/agent-identities/shapes/mint-flower.svg'); --face-w: 78px; --face-h: 68px; --face-y: 4px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/cheerful.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Host</p>
+              <p class="parts">mint flower + cheerful</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #c7b5ff; --shape-url: url('../src/assets/agent-identities/shapes/bubble-star.svg'); --face-w: 78px; --face-h: 70px; --face-y: 5px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/sleepy.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Nightwatch</p>
+              <p class="parts">bubble star + sleepy</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #ff9a8c; --shape-url: url('../src/assets/agent-identities/shapes/cloud-spark.svg'); --face-w: 72px; --face-h: 72px; --face-y: 8px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/surprised.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Sentinel</p>
+              <p class="parts">cloud spark + surprised</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #7ea7ff; --shape-url: url('../src/assets/agent-identities/shapes/soft-spark.svg'); --face-w: 72px; --face-h: 72px; --face-y: 6px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/skeptical.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Critic</p>
+              <p class="parts">soft spark + skeptical</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #8ff2c7; --shape-url: url('../src/assets/agent-identities/shapes/puffy-star.svg'); --face-w: 76px; --face-h: 66px; --face-y: 5px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/calm.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Planner</p>
+              <p class="parts">puffy star + calm</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #ffd56a; --shape-url: url('../src/assets/agent-identities/shapes/mint-flower.svg'); --face-w: 76px; --face-h: 76px; --face-y: 7px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/excited.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Spark</p>
+              <p class="parts">mint flower + excited</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+
+        <article class="card" style="--agent-color: #a9e3ff; --shape-url: url('../src/assets/agent-identities/shapes/rounded-clover.svg'); --face-w: 76px; --face-h: 70px; --face-y: 7px">
+          <div class="avatar">
+            <div class="shape"></div>
+            <img class="face" src="../src/assets/agent-identities/expressions/concerned.svg" alt="" />
+          </div>
+          <div class="label">
+            <div>
+              <p class="name">Guardian</p>
+              <p class="parts">rounded clover + concerned</p>
+            </div>
+            <span class="chip"></span>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
