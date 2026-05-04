@@ -13,8 +13,7 @@ function formatStamp(d: Date): string {
 }
 
 export function OsBar({
-  onDispatch,
-  notificationCount
+  onDispatch
 }: {
   onDispatch: () => void
   notificationCount: number
@@ -34,7 +33,10 @@ export function OsBar({
   return (
     <header className="header">
       <div className="header-left">
-        <div className="header-brand">Oversight OS</div>
+        <div className="header-brand-stack">
+          <div className="header-brand">Oversight OS</div>
+          <div className="header-tagline">Control room for many agents</div>
+        </div>
       </div>
       <div className="header-center">
         <span className={`live${connected ? "" : " offline"}`} />
@@ -62,12 +64,6 @@ export function OsBar({
             <polygon points="6 4 20 12 6 20 6 4" />
           </svg>
         </button>
-        <button className="header-icon-btn" type="button" aria-label="Search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-        </button>
         <button
           className="header-icon-btn has-tip"
           type="button"
@@ -78,19 +74,6 @@ export function OsBar({
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />
           </svg>
-        </button>
-        <button className="header-icon-btn" type="button" aria-label="Theme">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5" />
-          </svg>
-        </button>
-        <button className="header-icon-btn" type="button" aria-label="Notifications">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          </svg>
-          {notificationCount > 0 && <span className="badge">{notificationCount}</span>}
         </button>
         <div className="header-avatar" aria-label="User">CL</div>
       </div>
