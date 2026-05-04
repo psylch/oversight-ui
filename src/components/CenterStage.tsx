@@ -1,5 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import type { DecisionOpenEvent, Tier } from "../types"
+import type {
+  DecisionOpenEvent,
+  DecisionShape,
+  ShapePayload,
+  ShapePayloadComparison,
+  ShapePayloadDiff,
+  ShapePayloadInspection,
+  ShapePayloadReplace,
+  Tier
+} from "../types"
 import {
   tierForArtifact,
   useArtifactsByRefs,
@@ -95,16 +104,14 @@ const DEMO_DECISION = {
       ship v2 to the brief channel.
     </>
   ),
-  diagram: {
-    existingText: <span className="strike">"60% of Series-B fintechs use Plaid"</span>,
+  shape: "replace" as DecisionShape,
+  shapePayload: {
+    kind: "replace",
+    existingText: "“60% of Series-B fintechs use Plaid”",
     suggestionText:
-      '"majority of Series-B fintechs (no single dataset covers all regions)"',
-    actionText: (
-      <>
-        Ship v2 to <span className="channel">#q3-brief</span> channel
-      </>
-    )
-  },
+      "“majority of Series-B fintechs (no single dataset covers all regions)”",
+    actionText: "Ship v2 to #q3-brief channel"
+  } satisfies ShapePayload,
   evidence: [
     { badge: "V", name: "CB Insights · State of Fintech Q2", flagged: false },
     { badge: "V", name: "Plaid customers page", flagged: false },
@@ -181,6 +188,177 @@ const DISPATCH_PRESETS: DispatchPreset[] = [
     goal: "Map the codebase and propose next refactor target"
   }
 ]
+
+// ----- Shape renderers ---------------------------------------------------
+// Each shape sits between .card-rec and .card-evidence. They share padding
+// and hairline language so the family reads as one component, varying only
+// in how the middle "context" is structured.
+
+function ShapeReplace({ data }: { data: ShapePayloadReplace }) {
+  return (
+    <div className="diagram">
+      <div className="diagram-grid">
+        <div className="dgm-block">
+          <div className="dgm-head">
+            <div className="dgm-icon">{ICON_DOC}</div>
+            Existing
+          </div>
+          <div className="dgm-text">
+            <span className="strike">{data.existingText}</span>
+          </div>
+        </div>
+        <div className="dgm-arrow">
+          <span className="dgm-lab replace">Replace</span>
+          <span className="dgm-arrow-line">{ICON_ARROW}</span>
+        </div>
+        <div className="dgm-block">
+          <div className="dgm-head">
+            <div className="dgm-icon">{ICON_SPARKLE}</div>
+            Suggestion
+          </div>
+          <div className="dgm-text">{data.suggestionText}</div>
+        </div>
+        <div className="dgm-arrow">
+          <span className="dgm-lab ship">Ship</span>
+          <span className="dgm-arrow-line">{ICON_ARROW}</span>
+        </div>
+        <div className="dgm-block">
+          <div className="dgm-head">
+            <div className="dgm-icon">{ICON_SEND}</div>
+            Action
+          </div>
+          <div className="dgm-text">{data.actionText}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShapeComparison({ data }: { data: ShapePayloadComparison }) {
+  const Side = ({
+    side,
+    opt,
+    picked
+  }: {
+    side: "A" | "B"
+    opt: ShapePayloadComparison["optionA"]
+    picked: boolean
+  }) => (
+    <div className={`cmp-side${picked ? " picked" : ""}`}>
+      <div className="cmp-head">
+        <span className="cmp-tag">Option {side}</span>
+        {picked && <span className="cmp-pick-flag">Recommended</span>}
+      </div>
+      <div className="cmp-title">{opt.title}</div>
+      <dl className="cmp-metrics">
+        {opt.metrics.map((m) => (
+          <div className="cmp-metric" key={m.k}>
+            <dt>{m.k}</dt>
+            <dd>{m.v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+  return (
+    <div className="shape shape-comparison">
+      <div className="cmp-grid">
+        <Side side="A" opt={data.optionA} picked={data.pick === "A"} />
+        <div className="cmp-versus" aria-hidden="true">
+          <span>vs</span>
+        </div>
+        <Side side="B" opt={data.optionB} picked={data.pick === "B"} />
+      </div>
+      <p className="cmp-reason">
+        <span className="cmp-reason-lab">Pick · {data.pick}</span>
+        <span>{data.pickReason}</span>
+      </p>
+    </div>
+  )
+}
+
+function ShapeDiff({ data }: { data: ShapePayloadDiff }) {
+  const ok = data.testStatus.passed === data.testStatus.total
+  return (
+    <div className="shape shape-diff">
+      <div className="diff-head">
+        <span className="diff-file">{data.file}</span>
+        <span className="diff-counts">
+          <span className="diff-add-count">+{data.hunks.filter((h) => h.kind === "add").length}</span>
+          <span className="diff-del-count">−{data.hunks.filter((h) => h.kind === "del").length}</span>
+        </span>
+      </div>
+      <pre className="diff-body">
+        {data.hunks.map((h, i) => (
+          <div key={i} className={`diff-line diff-${h.kind}`}>
+            <span className="diff-gutter">
+              {h.kind === "add" ? "+" : h.kind === "del" ? "−" : " "}
+            </span>
+            <span className="diff-text">{h.text}</span>
+          </div>
+        ))}
+      </pre>
+      <div className={`diff-tests${ok ? " ok" : " fail"}`}>
+        <span className="diff-tests-dot" aria-hidden="true" />
+        <span className="diff-tests-lab">Tests</span>
+        <span className="diff-tests-num">
+          {data.testStatus.passed}/{data.testStatus.total} passed
+        </span>
+        {data.testStatus.note && <span className="diff-tests-note">{data.testStatus.note}</span>}
+      </div>
+    </div>
+  )
+}
+
+function ShapeInspection({ data }: { data: ShapePayloadInspection }) {
+  return (
+    <div className="shape shape-inspection">
+      <div className="insp-scope">
+        <span className="insp-scope-lab">Scope</span>
+        <span className="insp-scope-val">{data.scope}</span>
+      </div>
+      <ul className="insp-checks">
+        {data.checks.map((c, i) => (
+          <li key={i} className={`insp-check${c.ok ? " ok" : " fail"}`}>
+            <span className="insp-check-mark" aria-hidden="true">
+              {c.ok ? ICON_CHECK : ICON_REJECT}
+            </span>
+            <span className="insp-check-label">{c.label}</span>
+            <span className="insp-check-result">{c.result}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="insp-conclusion">{data.conclusion}</p>
+    </div>
+  )
+}
+
+function renderShape(shape: DecisionShape | undefined, payload: ShapePayload | undefined) {
+  if (!payload) {
+    if (shape === "replace" || !shape) {
+      return (
+        <ShapeReplace
+          data={{
+            existingText: "—",
+            suggestionText: "—",
+            actionText: "—"
+          }}
+        />
+      )
+    }
+    return null
+  }
+  switch (payload.kind) {
+    case "replace":
+      return <ShapeReplace data={payload} />
+    case "comparison":
+      return <ShapeComparison data={payload} />
+    case "diff":
+      return <ShapeDiff data={payload} />
+    case "inspection":
+      return <ShapeInspection data={payload} />
+  }
+}
 
 function CenterEmpty(_props: { counter: string; calm: boolean }) {
   return (
@@ -276,6 +454,16 @@ export function CenterStage() {
   const total = openDecisions.length
 
   const [preview, setPreview] = useState<PreviewArtifact | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flashToast = (msg: string) => {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2000)
+  }
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+  }, [])
 
   const counter = total === 0
     ? "All clear"
@@ -296,45 +484,29 @@ export function CenterStage() {
     return () => clearInterval(t)
   }, [decision, deadline])
 
+  const toastNode = toast && (
+    <div className="momentum-toast" role="status" aria-live="polite">
+      <span className="momentum-toast-dot" aria-hidden="true" />
+      <span className="momentum-toast-text">{toast}</span>
+    </div>
+  )
+
   // No selected agent and no decision: show empty + closed overlay slot
   if (!decision) {
     if (!agent) {
       return (
         <>
           <CenterEmpty counter={counter} calm={criticalCount === 0} />
+          {toastNode}
         </>
       )
     }
-    // Have agent but no live decision → render demo dossier so visual stays anchored
+    // Have agent but no live decision → calmer "agent at work" card
     return (
-      <DossierCard
-        meta={{
-          agent: agent.display_name,
-          ts: agent.intent ?? agent.state,
-          category: "Status",
-          pillKind: "fyi",
-          pillLabel: "No decision pending"
-        }}
-        criticalCount={criticalCount}
-        total={total}
-        title={agent.intent ?? `${agent.display_name} is ${agent.state}.`}
-        rec={
-          <>
-            No open decision for this agent right now. Activity continues to stream into the right
-            panel; new decisions will replace this card immediately.
-          </>
-        }
-        diagramDemo={DEMO_DECISION.diagram}
-        evidence={DEMO_DECISION.evidence}
-        defaultCountdown={"—"}
-        primaryLabel="Acknowledge"
-        onPrimary={() => {}}
-        onReject={() => {}}
-        onChat={() => {}}
-        onPreviewEvidence={(name) => setPreview(v7DemoPreviewFor(name))}
-        preview={preview}
-        onClosePreview={() => setPreview(null)}
-      />
+      <>
+        <AgentAtWorkCard agent={agent} />
+        {toastNode}
+      </>
     )
   }
 
@@ -358,6 +530,7 @@ export function CenterStage() {
   const reject = decision.actions.find((a) => /reject|deny|no/i.test(a.id)) ?? decision.actions[1]
 
   return (
+    <>
     <DossierCard
       meta={{
         agent: agent?.display_name ?? decision.agent_id,
@@ -370,13 +543,22 @@ export function CenterStage() {
       total={total}
       title={decision.headline}
       rec={<>{decision.recommendation}</>}
-      diagramDemo={DEMO_DECISION.diagram}
+      shape={decision.decision_shape ?? "replace"}
+      shapePayload={decision.shape_payload}
       evidence={evidenceRows}
       defaultCountdown={`${defaultActionLabel} in ${formatRemaining(remaining)}`}
       primaryLabel={primary?.label ?? "Approve"}
       rejectLabel={reject?.label}
-      onPrimary={() => primary && sendAction(decision.decision_id, primary.id)}
-      onReject={() => reject && sendAction(decision.decision_id, reject.id)}
+      onPrimary={() => {
+        if (!primary) return
+        sendAction(decision.decision_id, primary.id)
+        flashToast("Logged · ledger appended")
+      }}
+      onReject={() => {
+        if (!reject) return
+        sendAction(decision.decision_id, reject.id)
+        flashToast("Rejected · agent paused")
+      }}
       onChat={() => {}}
       onPreviewEvidence={(name, art) => {
         if (art) {
@@ -392,7 +574,79 @@ export function CenterStage() {
       preview={preview}
       onClosePreview={() => setPreview(null)}
     />
+    {toastNode}
+    </>
   )
+}
+
+// Calmer "agent at work" card — shown when a non-decision agent is selected.
+// Same dossier shell, no urgency pill, no Approve/Reject, single ghost button.
+function AgentAtWorkCard({ agent }: { agent: import("../types").AgentStateEvent }) {
+  const elapsed = formatElapsed(agent.elapsed_ms)
+  const stateLabel =
+    agent.state === "working"
+      ? "Working"
+      : agent.state === "waiting"
+      ? "Waiting"
+      : agent.state === "stalled"
+      ? "Stalled"
+      : agent.state === "done"
+      ? "Done"
+      : "Errored"
+  return (
+    <section className="center no-eyebrow">
+      <article className="card agent-at-work">
+        <div className="card-scroll">
+          <header className="card-meta">
+            <span className="agent">{agent.display_name}</span>
+            <span className="sep">·</span>
+            <span>{stateLabel}</span>
+            <span className="sep">·</span>
+            <span>elapsed {elapsed}</span>
+          </header>
+
+          <h2 className="card-title">{agent.intent ?? `${agent.display_name} is ${agent.state}.`}</h2>
+
+          <p className="card-rec">
+            No decision pending. The agent is on task — activity continues to stream into the right
+            panel. A new decision will replace this card the moment one opens.
+          </p>
+
+          <div className="atwork-grid">
+            <div className="atwork-block">
+              <div className="atwork-lab">Current task</div>
+              <div className="atwork-val">{agent.intent ?? "—"}</div>
+            </div>
+            <div className="atwork-block">
+              <div className="atwork-lab">Latest activity</div>
+              <div className="atwork-val mono">{formatTimeUtc(agent.ts)}</div>
+            </div>
+            <div className="atwork-block">
+              <div className="atwork-lab">Elapsed</div>
+              <div className="atwork-val mono">{elapsed}</div>
+            </div>
+          </div>
+        </div>
+
+        <footer className="card-actions atwork-actions">
+          <button type="button" className="btn ghost" onClick={() => {}}>
+            {ICON_CLOCK}
+            Watch
+          </button>
+        </footer>
+      </article>
+    </section>
+  )
+}
+
+function formatElapsed(ms: number): string {
+  const s = Math.floor(ms / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`
+  if (m > 0) return `${m}m ${String(sec).padStart(2, "0")}s`
+  return `${sec}s`
 }
 
 interface DossierMeta {
@@ -416,7 +670,8 @@ interface DossierProps {
   total: number
   title: string
   rec: React.ReactNode
-  diagramDemo: typeof DEMO_DECISION.diagram
+  shape?: DecisionShape
+  shapePayload?: ShapePayload
   evidence: EvidenceRow[]
   defaultCountdown: string
   primaryLabel: string
@@ -467,43 +722,7 @@ function DossierCard(p: DossierProps) {
 
         <p className="card-rec">{p.rec}</p>
 
-        <div className="diagram">
-          <div className="diagram-grid">
-            <div className="dgm-block">
-              <div className="dgm-head">
-                <div className="dgm-icon">{ICON_DOC}</div>
-                Existing
-              </div>
-              <div className="dgm-text">{p.diagramDemo.existingText}</div>
-            </div>
-
-            <div className="dgm-arrow">
-              <span className="dgm-lab replace">Replace</span>
-              <span className="dgm-arrow-line">{ICON_ARROW}</span>
-            </div>
-
-            <div className="dgm-block">
-              <div className="dgm-head">
-                <div className="dgm-icon">{ICON_SPARKLE}</div>
-                Suggestion
-              </div>
-              <div className="dgm-text">{p.diagramDemo.suggestionText}</div>
-            </div>
-
-            <div className="dgm-arrow">
-              <span className="dgm-lab ship">Ship</span>
-              <span className="dgm-arrow-line">{ICON_ARROW}</span>
-            </div>
-
-            <div className="dgm-block">
-              <div className="dgm-head">
-                <div className="dgm-icon">{ICON_SEND}</div>
-                Action
-              </div>
-              <div className="dgm-text">{p.diagramDemo.actionText}</div>
-            </div>
-          </div>
-        </div>
+        {renderShape(p.shape, p.shapePayload)}
 
         <section className="card-evidence">
           <header className="card-evidence-head">
@@ -592,7 +811,8 @@ export function DemoDossier() {
       total={2}
       title={DEMO_DECISION.title}
       rec={DEMO_DECISION.rec}
-      diagramDemo={DEMO_DECISION.diagram}
+      shape={DEMO_DECISION.shape}
+      shapePayload={DEMO_DECISION.shapePayload}
       evidence={DEMO_DECISION.evidence}
       defaultCountdown={DEMO_DECISION.defaultCountdown}
       primaryLabel="Approve"
