@@ -28,7 +28,9 @@ import type {
   DecisionClosedEvent,
   DecisionId,
   DecisionOpenEvent,
-  Event
+  DecisionShape,
+  Event,
+  ShapePayload
 } from "./types"
 
 const DEMO_PACE = 1 // multiply all delays by this
@@ -104,7 +106,9 @@ function decisionOpen(
   headline: string,
   recommendation: string,
   evidence: DecisionOpenEvent["evidence"],
-  urgency: DecisionOpenEvent["urgency"] = "critical"
+  urgency: DecisionOpenEvent["urgency"] = "critical",
+  shape?: DecisionShape,
+  shapePayload?: ShapePayload
 ): DecisionOpenEvent {
   return {
     seq: next(),
@@ -121,7 +125,9 @@ function decisionOpen(
     actions: [
       { id: "approve", label: "Approve" },
       { id: "reject", label: "Reject" }
-    ]
+    ],
+    decision_shape: shape,
+    shape_payload: shapePayload
   }
 }
 
@@ -143,6 +149,8 @@ function decisionClosed(
 
 const DECISION_ID = "dec_demo_q3_brief"
 const NASH = "agent_nash"
+const MORROW = "agent_morrow"
+const MORROW_DECISION_ID = "dec_demo_morrow_perm"
 
 function bootScenario() {
   // 1) register six agents in different states
@@ -173,7 +181,46 @@ function bootScenario() {
         { ref: "art_score", label: "trust-score 0.42" },
         { ref: "art_hn", label: "HN thread #2024-1119 · flagged" }
       ],
-      "critical"
+      "critical",
+      "replace",
+      {
+        kind: "replace",
+        existingText: "“60% of Series-B fintechs use Plaid”",
+        suggestionText:
+          "“majority of Series-B fintechs (no single dataset covers all regions)”",
+        actionText: "Ship v2 to #q3-brief channel"
+      }
+    )
+  ])
+
+  // Morrow's decision — inspection shape, sign-off urgency
+  emitMany([
+    artifact(MORROW, "art_sso_group", "snippet", "SSO group: data-platform-readers\n\nMembers: 14 (all on data team). Read-only role binding.", "SSO group: data-platform-readers"),
+    artifact(MORROW, "art_audit", "snippet", "Audit log · last 30d\n\nNo policy violations. Group last modified 2026-04-12 by ops@.", "Audit log · 30d clean"),
+    artifact(MORROW, "art_dsr_policy", "url", "https://example.com/policy/data-platform", "Data-platform read policy"),
+    decisionOpen(
+      MORROW,
+      MORROW_DECISION_ID,
+      "Grant warehouse read via SSO group data-platform-readers",
+      "Morrow needs read access to the warehouse to finish the perm-denied query. Recommend granting via the existing SSO group rather than a personal grant — reversible, audited, expires with role.",
+      [
+        { ref: "art_sso_group", label: "SSO group: data-platform-readers" },
+        { ref: "art_audit", label: "Audit log · 30d clean" },
+        { ref: "art_dsr_policy", label: "Data-platform read policy" }
+      ],
+      "sign-off",
+      "inspection",
+      {
+        kind: "inspection",
+        scope: "Permission grant · warehouse · read",
+        checks: [
+          { label: "Group membership", result: "14 members, all on data team", ok: true },
+          { label: "Policy match", result: "covered by data-platform read policy", ok: true },
+          { label: "Audit history", result: "no violations in 30 days", ok: true },
+          { label: "Reversibility", result: "removable via SSO console; expires with role", ok: true }
+        ],
+        conclusion: "Grant via SSO group — lower blast radius than a personal grant."
+      }
     )
   ])
 
@@ -289,6 +336,8 @@ const FOLLOW_UPS: Record<
         kind: "url" | "snippet"
         location: string
       }>
+      shape: DecisionShape
+      shape_payload: ShapePayload
     }
   }
 > = {
@@ -307,7 +356,14 @@ const FOLLOW_UPS: Record<
         { ref: "yc_post", label: "YC Research · Agent Workflows", kind: "url", location: "https://example.com/yc-agent-workflows" },
         { ref: "tscore", label: "trust-score 0.78", kind: "snippet", location: "trust-score 0.78 — high overlap with peer-reviewed sources" },
         { ref: "hn_skim", label: "HN reactions · mostly positive", kind: "snippet", location: "HN thread: 312 upvotes, 47 comments, no flagged corrections" }
-      ]
+      ],
+      shape: "replace",
+      shape_payload: {
+        kind: "replace",
+        existingText: "2 secondary blog posts cited as anchor",
+        suggestionText: "Karpathy · Agent Ergonomics talk (Nov 2024)",
+        actionText: "Update brief refs.bib and re-render section 2"
+      }
     }
   },
   "writing-partner": {
@@ -324,7 +380,31 @@ const FOLLOW_UPS: Record<
         { ref: "hook_a", label: "Draft · Hook A (concrete scenario)", kind: "snippet", location: "It's Friday 6pm. Three Claude sessions are open. Each one needs you..." },
         { ref: "hook_b", label: "Draft · Hook B (abstract framing)", kind: "snippet", location: "The supervisor is the new bottleneck in agent workflows..." },
         { ref: "voice", label: "Your past 5 essays · concrete-first ratio 4/5", kind: "snippet", location: "Voice analysis: 4 of 5 prior essays open with a concrete scene." }
-      ]
+      ],
+      shape: "comparison",
+      shape_payload: {
+        kind: "comparison",
+        optionA: {
+          label: "Hook A",
+          title: "Concrete · Friday 6pm scene",
+          metrics: [
+            { k: "Pull", v: "Strong" },
+            { k: "Voice match", v: "4/5 prior" },
+            { k: "Length", v: "62 words" }
+          ]
+        },
+        optionB: {
+          label: "Hook B",
+          title: "Abstract · supervisor framing",
+          metrics: [
+            { k: "Pull", v: "Medium" },
+            { k: "Voice match", v: "1/5 prior" },
+            { k: "Length", v: "48 words" }
+          ]
+        },
+        pick: "A",
+        pickReason: "Stronger pull, matches your concrete-first voice."
+      }
     }
   },
   "qa-reviewer": {
@@ -341,7 +421,23 @@ const FOLLOW_UPS: Record<
         { ref: "repro", label: "Repro video · 3 attempts", kind: "snippet", location: "Recording: Chrome → /login → loops to /login → cleared cookie → success." },
         { ref: "diff", label: "diff · auth/login.ts (+12 −3)", kind: "snippet", location: "+ if (req.cookies.session_stale) res.clearCookie('session_stale')" },
         { ref: "tests", label: "All login tests pass (24/24)", kind: "snippet", location: "Test suite: 24 passed, 0 failed, 0 skipped (run: 14:32 UTC)" }
-      ]
+      ],
+      shape: "diff",
+      shape_payload: {
+        kind: "diff",
+        file: "auth/login.ts",
+        hunks: [
+          { kind: "ctx", text: "export async function handleLogin(req, res) {" },
+          { kind: "ctx", text: "  const session = await loadSession(req)" },
+          { kind: "del", text: "  if (!session) return res.redirect('/login')" },
+          { kind: "add", text: "  if (req.cookies.session_stale) {" },
+          { kind: "add", text: "    res.clearCookie('session_stale')" },
+          { kind: "add", text: "  }" },
+          { kind: "add", text: "  if (!session) return res.redirect('/login')" },
+          { kind: "ctx", text: "  return res.redirect('/dashboard')" }
+        ],
+        testStatus: { passed: 24, total: 24, note: "login suite · 14:32 UTC" }
+      }
     }
   },
   "project-scout": {
@@ -358,7 +454,31 @@ const FOLLOW_UPS: Record<
         { ref: "bill", label: "billing/ · 4 internal callers · test coverage 91%", kind: "snippet", location: "billing/ — 4 callers, 91% coverage, no DB schema migration." },
         { ref: "auth", label: "auth/ · 23 callers · schema migration required", kind: "snippet", location: "auth/ — 23 callers, 67% coverage, requires schema migration." },
         { ref: "graph", label: "Dependency graph (snippet)", kind: "snippet", location: "billing → invoice, ledger, customer\nauth → 23 modules incl. session/, api/, gateway/" }
-      ]
+      ],
+      shape: "comparison",
+      shape_payload: {
+        kind: "comparison",
+        optionA: {
+          label: "Billing first",
+          title: "Refactor billing module",
+          metrics: [
+            { k: "Callers", v: "4" },
+            { k: "Coverage", v: "91%" },
+            { k: "Schema", v: "no change" }
+          ]
+        },
+        optionB: {
+          label: "Auth migration",
+          title: "Migrate auth subsystem",
+          metrics: [
+            { k: "Callers", v: "23" },
+            { k: "Coverage", v: "67%" },
+            { k: "Schema", v: "migration required" }
+          ]
+        },
+        pick: "A",
+        pickReason: "Smaller blast radius, fully covered, no schema migration."
+      }
     }
   }
 }
@@ -399,7 +519,9 @@ export function dispatchAgent(opts: {
           followUp.decision.headline,
           followUp.decision.recommendation,
           followUp.decision.evidence.map((e) => ({ ref: e.ref, label: e.label })),
-          "critical"
+          "critical",
+          followUp.decision.shape,
+          followUp.decision.shape_payload
         )
       ])
     }, 12000 * DEMO_PACE)

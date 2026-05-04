@@ -40,6 +40,38 @@ export interface AgentStateEvent extends BaseEvent {
   elapsed_ms: number
 }
 
+export type DecisionShape = "replace" | "comparison" | "diff" | "inspection"
+
+// Shape-specific narrative payload. Free-form per shape so the same protocol
+// can carry visual variants without a structural overhaul. Renderers fall
+// back to the static demo placeholder when a shape's payload is absent.
+export interface ShapePayloadReplace {
+  existingText: string
+  suggestionText: string
+  actionText: string
+}
+export interface ShapePayloadComparison {
+  optionA: { label: string; title: string; metrics: Array<{ k: string; v: string }> }
+  optionB: { label: string; title: string; metrics: Array<{ k: string; v: string }> }
+  pick: "A" | "B"
+  pickReason: string
+}
+export interface ShapePayloadDiff {
+  file: string
+  hunks: Array<{ kind: "add" | "del" | "ctx"; text: string }>
+  testStatus: { passed: number; total: number; note?: string }
+}
+export interface ShapePayloadInspection {
+  scope: string
+  checks: Array<{ label: string; result: string; ok: boolean }>
+  conclusion: string
+}
+export type ShapePayload =
+  | ({ kind: "replace" } & ShapePayloadReplace)
+  | ({ kind: "comparison" } & ShapePayloadComparison)
+  | ({ kind: "diff" } & ShapePayloadDiff)
+  | ({ kind: "inspection" } & ShapePayloadInspection)
+
 export interface DecisionOpenEvent extends BaseEvent {
   type: "decision.open"
   decision_id: DecisionId
@@ -51,6 +83,8 @@ export interface DecisionOpenEvent extends BaseEvent {
   evidence: Array<{ ref: ArtifactRef; label: string }>
   actions: Array<{ id: string; label: string }>
   escalated?: boolean
+  decision_shape?: DecisionShape
+  shape_payload?: ShapePayload
 }
 
 export interface DecisionClosedEvent extends BaseEvent {
