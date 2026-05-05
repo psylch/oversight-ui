@@ -216,7 +216,7 @@ const FLOW3: ReplayFlow = {
   steps: [
     {
       id: "flow3.faye-show",
-      label: "Faye · critical, AutoReplyCard open",
+      label: "Faye stopped at 62% — below your 80% threshold",
       target: `lane:${FAYE_AGENT_ID}`,
       run: () => {
         setSelectedAgent(FAYE_AGENT_ID)
@@ -225,7 +225,7 @@ const FLOW3: ReplayFlow = {
     },
     {
       id: "flow3.ring",
-      label: "Confidence ring · 96% on the surface",
+      label: "Confidence ring · 62% · she asked you to review",
       target: "ar-ring",
     },
     {
@@ -250,19 +250,14 @@ const FLOW3: ReplayFlow = {
     },
     {
       id: "flow3.tree-toggle",
-      label: "Trace decision path — ring drops 96 → 62",
+      label: "Trace decision path — see why she's at 62",
       target: "ar-tree-toggle",
       run: () => clickTarget("ar-tree-toggle"),
     },
     {
       id: "flow3.flagged-node",
-      label: "DM raw trace — the one node that drags it down",
+      label: "DM raw trace — the one branch dragging score down",
       target: "ar-tree-flagged",
-    },
-    {
-      id: "flow3.ring-after",
-      label: "Real confidence: 62% · auditing the path",
-      target: "ar-ring",
     },
   ],
 }

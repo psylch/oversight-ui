@@ -313,38 +313,19 @@ const ICON_CHEVRON = (
   </svg>
 )
 
-// Surface confidence — what Faye reports before drilling into the path.
-const SURFACE_CONFIDENCE = 0.96
-// Real confidence — after auditing every branch on the decision tree.
-const REAL_CONFIDENCE = 0.62
+// Faye's reported confidence — fixed, honest. She stopped because this is
+// below Alex's 80% auto-send threshold; the drill-down explains *why* it's
+// 62%, not "how the AI was lying about a higher number." Earlier prototypes
+// animated 96 → 62 on tree-open; that read as the system entrapping the AI
+// into a confession, which is exactly the wrong frame for an oversight tool.
+const CONFIDENCE = 0.62
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function AutoReplyCard() {
   const [hoveredClaim, setHoveredClaim] = useState<ClaimData | null>(null)
   const [mouseAt, setMouseAt] = useState<{ x: number; y: number } | null>(null)
   const [treeOpen, setTreeOpen] = useState(false)
-  const [confidence, setConfidence] = useState(SURFACE_CONFIDENCE)
-
-  // When the tree opens, animate the ring from surface 96% down to real 62%
-  // — the "auditing the path" punchline of Flow 3. When the tree is hidden
-  // again, snap back to the surface value so a re-open replays cleanly.
-  useEffect(() => {
-    if (!treeOpen) {
-      setConfidence(SURFACE_CONFIDENCE)
-      return
-    }
-    const start = performance.now()
-    const dur = 1500 // ms
-    let raf = 0
-    const tick = (t: number) => {
-      const e = Math.min(1, (t - start) / dur)
-      const ease = 1 - Math.pow(1 - e, 3) // easeOutCubic
-      setConfidence(SURFACE_CONFIDENCE + (REAL_CONFIDENCE - SURFACE_CONFIDENCE) * ease)
-      if (e < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [treeOpen])
+  const confidence = CONFIDENCE
 
   const [c1, c2, c3, c4] = CLAIMS as [ClaimData, ClaimData, ClaimData, ClaimData]
 
