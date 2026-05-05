@@ -247,6 +247,24 @@ input, textarea, select { font: inherit; color: inherit; }
   50%      { outline-color: var(--c-action); box-shadow: 0 0 0 10px transparent; }
 }
 
+/* SVG elements ignore outline; switch to a filter-based glow that paints
+   reliably on <svg>, <g>, and <path> targets (ring, decision tree, flagged
+   node). */
+svg.step-pulse,
+g.step-pulse {
+  outline: none;
+  animation: step-pulse-svg 1.4s ease-out infinite;
+}
+svg.step-pulse .node-rect,
+g.step-pulse .node-rect {
+  stroke: var(--c-action);
+  stroke-width: 2;
+}
+@keyframes step-pulse-svg {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--c-action)) drop-shadow(0 0 8px var(--c-action-glow)); }
+  50%      { filter: drop-shadow(0 0 8px var(--c-action)) drop-shadow(0 0 22px var(--c-action-glow)); }
+}
+
 .stepper-dock {
   position: fixed;
   right: 24px;

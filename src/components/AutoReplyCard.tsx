@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useReplayStep } from "../store"
 import { createPortal } from "react-dom"
 import { setOpsTab } from "../store"
 import { CardHeader } from "./CardChrome"
@@ -224,6 +225,10 @@ const TREE_NODES: TreeNode[] = [
     label: "offer: DM raw trace", sub: "38% validity (model only)" },
 ]
 
+// id of the node that drags overall confidence down — used as the data-step-target
+// anchor when the stepper highlights "the one flagged branch".
+const FLAGGED_NODE_ID = "trace"
+
 const TREE_EDGES: Edge[] = [
   { from: "root",   to: "thread",   state: "chosen" },
   { from: "root",   to: "dm",       state: "rejected" },
@@ -280,7 +285,12 @@ function DecisionTree() {
           return <path key={i} className={`edge ${e.state}`} d={edgePath(s, t)} />
         })}
         {TREE_NODES.map((n) => (
-          <g key={n.id} className={`node ${n.state}`} transform={`translate(${n.x} ${n.y})`}>
+          <g
+            key={n.id}
+            className={`node ${n.state}`}
+            transform={`translate(${n.x} ${n.y})`}
+            data-step-target={n.id === FLAGGED_NODE_ID ? "ar-tree-flagged" : undefined}
+          >
             <rect className="node-rect" x={0} y={0} width={n.w} height={n.h} />
             <text className="node-icon" x={14} y={n.h / 2 + 4}>{STATE_ICON[n.state]}</text>
             <text className="node-label" x={32} y={22}>{n.label}</text>
@@ -303,13 +313,60 @@ const ICON_CHEVRON = (
   </svg>
 )
 
+// Surface confidence — what Faye reports before drilling into the path.
+const SURFACE_CONFIDENCE = 0.96
+// Real confidence — after auditing every branch on the decision tree.
+const REAL_CONFIDENCE = 0.62
+
 // ── Main component ────────────────────────────────────────────────────────────
 export function AutoReplyCard() {
   const [hoveredClaim, setHoveredClaim] = useState<ClaimData | null>(null)
   const [mouseAt, setMouseAt] = useState<{ x: number; y: number } | null>(null)
   const [treeOpen, setTreeOpen] = useState(false)
+  const [confidence, setConfidence] = useState(SURFACE_CONFIDENCE)
+
+  // When the tree opens, animate the ring from surface 96% down to real 62%
+  // — the "auditing the path" punchline of Flow 3. When the tree is hidden
+  // again, snap back to the surface value so a re-open replays cleanly.
+  useEffect(() => {
+    if (!treeOpen) {
+      setConfidence(SURFACE_CONFIDENCE)
+      return
+    }
+    const start = performance.now()
+    const dur = 1500 // ms
+    let raf = 0
+    const tick = (t: number) => {
+      const e = Math.min(1, (t - start) / dur)
+      const ease = 1 - Math.pow(1 - e, 3) // easeOutCubic
+      setConfidence(SURFACE_CONFIDENCE + (REAL_CONFIDENCE - SURFACE_CONFIDENCE) * ease)
+      if (e < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [treeOpen])
 
   const [c1, c2, c3, c4] = CLAIMS as [ClaimData, ClaimData, ClaimData, ClaimData]
+
+  // Replay-driven hover: when the stepper sets replayStep to "claim:N",
+  // synthesize the hover state so the source-preview popup appears next to
+  // the underlined claim. Clears when the step moves elsewhere.
+  const replayStep = useReplayStep()
+  useEffect(() => {
+    if (!replayStep || !replayStep.startsWith("claim:")) return
+    const num = Number(replayStep.split(":")[1])
+    const claim = CLAIMS.find((c) => c.num === num)
+    if (!claim) return
+    const el = document.querySelector<HTMLElement>(`[data-step-target="${replayStep}"]`)
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setHoveredClaim(claim)
+    setMouseAt({ x: r.right - 8, y: r.bottom })
+    return () => {
+      setHoveredClaim(null)
+      setMouseAt(null)
+    }
+  }, [replayStep])
 
   function handleClaimEnter(claim: ClaimData, e: React.MouseEvent<HTMLSpanElement>) {
     setHoveredClaim(claim)
@@ -348,11 +405,13 @@ export function AutoReplyCard() {
           {/* Left column */}
           <div className="ar-left">
             <span className="ar-conf-label">Overall confidence</span>
-            <ConfidenceRing pct={0.62} />
-            <div className="ar-warning">
-              <span className="ar-warn-icon">⚠</span>
-              <span>Below your 80% auto-send threshold</span>
-            </div>
+            <ConfidenceRing pct={confidence} />
+            {confidence < 0.8 && (
+              <div className="ar-warning">
+                <span className="ar-warn-icon">⚠</span>
+                <span>Below your 80% auto-send threshold</span>
+              </div>
+            )}
             <dl className="ar-stats">
               <div className="ar-stat-row"><dt>Claims cited</dt><dd>3 / 4</dd></div>
               <div className="ar-stat-row"><dt>Low-confidence claims</dt><dd>1</dd></div>
@@ -385,19 +444,19 @@ export function AutoReplyCard() {
               <div className="ar-draft-hint">Hover any underlined claim to inspect its source</div>
               <p className="ar-draft-text">
                 Hey Raj — on our launch benchmark we see{" "}
-                <span className={`ar-claim ${c1.colorClass}`} onMouseEnter={(e) => handleClaimEnter(c1, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
+                <span className={`ar-claim ${c1.colorClass}`} data-step-target="claim:1" onMouseEnter={(e) => handleClaimEnter(c1, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
                   {c1.symbol} {c1.text}
                 </span>
                 {" "}across typical enterprise workloads.{" "}
-                <span className={`ar-claim ${c2.colorClass}`} onMouseEnter={(e) => handleClaimEnter(c2, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
+                <span className={`ar-claim ${c2.colorClass}`} data-step-target="claim:2" onMouseEnter={(e) => handleClaimEnter(c2, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
                   {c2.symbol} {c2.text}
                 </span>
                 {" "}used a 50-rps cold-start workload across 3 regions.{" "}
-                <span className={`ar-claim ${c3.colorClass}`} onMouseEnter={(e) => handleClaimEnter(c3, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
+                <span className={`ar-claim ${c3.colorClass}`} data-step-target="claim:3" onMouseEnter={(e) => handleClaimEnter(c3, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
                   {c3.symbol} {c3.text}
                 </span>
                 , so we only compared against their open-source tier.{" "}
-                <span className={`ar-claim ${c4.colorClass}`} onMouseEnter={(e) => handleClaimEnter(c4, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
+                <span className={`ar-claim ${c4.colorClass}`} data-step-target="claim:4" onMouseEnter={(e) => handleClaimEnter(c4, e)} onMouseMove={handleClaimMove} onMouseLeave={handleClaimLeave}>
                   {c4.symbol} {c4.text}
                 </span>
               </p>

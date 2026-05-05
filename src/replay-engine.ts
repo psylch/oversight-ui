@@ -229,15 +229,40 @@ const FLOW3: ReplayFlow = {
       target: "ar-ring",
     },
     {
+      id: "flow3.claim-1",
+      label: "Hover ❶ — model paraphrase, 84% validity",
+      target: "claim:1",
+    },
+    {
+      id: "flow3.claim-2",
+      label: "Hover ❷ — user-written blog post, 96% validity",
+      target: "claim:2",
+    },
+    {
+      id: "flow3.claim-3",
+      label: "Hover ❸ — scraped pricing page, 71% validity",
+      target: "claim:3",
+    },
+    {
+      id: "flow3.claim-4",
+      label: "Hover ❹ — model only, 38% validity (the problem)",
+      target: "claim:4",
+    },
+    {
       id: "flow3.tree-toggle",
-      label: "Trace decision path — expand the tree",
+      label: "Trace decision path — ring drops 96 → 62",
       target: "ar-tree-toggle",
       run: () => clickTarget("ar-tree-toggle"),
     },
     {
-      id: "flow3.tree-svg",
-      label: "Ten nodes, three layers — chosen vs flagged",
-      target: "ar-tree-svg",
+      id: "flow3.flagged-node",
+      label: "DM raw trace — the one node that drags it down",
+      target: "ar-tree-flagged",
+    },
+    {
+      id: "flow3.ring-after",
+      label: "Real confidence: 62% · auditing the path",
+      target: "ar-ring",
     },
   ],
 }

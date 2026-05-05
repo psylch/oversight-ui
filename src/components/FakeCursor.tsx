@@ -21,6 +21,11 @@ export function FakeCursor() {
     const tryFind = () => {
       const el = document.querySelector<HTMLElement>(`[data-step-target="${target}"]`)
       if (!el) return false
+      // Bring the target into view if it's clipped or below the fold (e.g.
+      // the decision tree appears under the card scroll once expanded).
+      // Instant scroll so getBoundingClientRect is correct on the next read;
+      // the cursor's own CSS transition still animates the move smoothly.
+      el.scrollIntoView({ behavior: "auto", block: "center", inline: "nearest" })
       const r = el.getBoundingClientRect()
       const x = r.left + Math.min(28, r.width / 2)
       const y = r.top + Math.min(28, r.height / 2)
