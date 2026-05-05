@@ -151,7 +151,7 @@ function urgencyPillLabel(u: DecisionOpenEvent["urgency"]): string {
 
 interface DispatchPreset {
   id: string
-  slug: string
+  displayName: string
   name: string
   description: string
   goal: string
@@ -160,28 +160,28 @@ interface DispatchPreset {
 const DISPATCH_PRESETS: DispatchPreset[] = [
   {
     id: "research-analyst",
-    slug: "outreach",
+    displayName: "Iris · outreach",
     name: "Outreach Scout",
     description: "Finds creators, scores fit, drafts personalized DMs.",
     goal: "Find 40 dev-tool creators and score fit for launch outreach"
   },
   {
     id: "writing-partner",
-    slug: "drafts",
+    displayName: "Juno · drafts",
     name: "Drafter",
     description: "Turns rough angles into ready-to-post drafts; tags by audience.",
     goal: "Draft launch-week posts across 4 audience angles"
   },
   {
     id: "qa-reviewer",
-    slug: "comparison",
+    displayName: "Kai · comparison",
     name: "Comparison Builder",
     description: "Builds competitor comparison pages with sourced claims.",
     goal: "Audit /compare/launch for unsourced claims and replace with citations"
   },
   {
     id: "project-scout",
-    slug: "social",
+    displayName: "Lyra · social",
     name: "Social Monitor",
     description: "Watches X / HN / Reddit; auto-replies low-stakes; flags risky.",
     goal: "Watch overnight mentions and flag anything off-tone for enterprise prospects"
@@ -375,7 +375,7 @@ function CenterEmpty(_props: { counter: string; calm: boolean }) {
                   onClick={async () => {
                     const { dispatchAgent } = await import("../demo-runtime")
                     dispatchAgent({
-                      display_name: `${p.name.split(" ")[0]} · ${p.slug}`,
+                      display_name: p.displayName,
                       intent: p.goal,
                       preset: p.id
                     })
@@ -567,7 +567,11 @@ export function CenterStage() {
       shape={decision.decision_shape ?? "replace"}
       shapePayload={decision.shape_payload}
       evidence={evidenceRows}
-      defaultCountdown={`${defaultActionLabel} in ${formatRemaining(remaining)}`}
+      defaultCountdown={
+        decision.urgency === "critical"
+          ? null
+          : `${defaultActionLabel} in ${formatRemaining(remaining)}`
+      }
       primaryLabel={primary?.label ?? "Approve"}
       rejectLabel={reject?.label}
       onPrimary={() => {
@@ -692,7 +696,7 @@ interface DossierProps {
   shape?: DecisionShape
   shapePayload?: ShapePayload
   evidence: EvidenceRow[]
-  defaultCountdown: string
+  defaultCountdown: string | null
   primaryLabel: string
   rejectLabel?: string
   onPrimary: () => void
@@ -773,13 +777,15 @@ function DossierCard(p: DossierProps) {
           </div>
         </section>
 
-        <div className="card-default">
-          <span className="lab">
-            {ICON_CLOCK}
-            Default if no action
-          </span>
-          <span className="countdown">{p.defaultCountdown}</span>
-        </div>
+        {p.defaultCountdown && (
+          <div className="card-default">
+            <span className="lab">
+              {ICON_CLOCK}
+              Default if no action
+            </span>
+            <span className="countdown">{p.defaultCountdown}</span>
+          </div>
+        )}
        </div>
 
         <footer className="card-actions">

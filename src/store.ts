@@ -328,10 +328,14 @@ export function useAgentsByGroup(): AgentGroups {
       const hasCritical = open.some((d) => d.urgency === "critical")
       const hasSignoff = open.some((d) => d.urgency === "sign-off")
 
-      if (a.state === "stalled" || a.state === "errored" || hasCritical) {
+      // Decision urgency wins over state. A stalled agent with a sign-off
+      // decision belongs in Awaiting (cyan), not Needs review (red).
+      if (hasCritical) {
         groups.needsYou.push(a)
       } else if (hasSignoff) {
         groups.awaitingSignoff.push(a)
+      } else if (a.state === "stalled" || a.state === "errored") {
+        groups.needsYou.push(a)
       } else if (a.state === "working") {
         groups.running.push(a)
       } else {

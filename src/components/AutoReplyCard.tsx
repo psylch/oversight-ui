@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { createPortal } from "react-dom"
 import { setOpsTab } from "../store"
-import { CardDefault, CardHeader } from "./CardChrome"
+import { CardHeader } from "./CardChrome"
 
 const ICON_CHECK = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -184,11 +184,6 @@ function ConfidenceRing({ pct }: { pct: number }) {
   )
 }
 
-function fmt(s: number): string {
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return `${m}m ${String(sec).padStart(2, "0")}s`
-}
 
 // ── Decision tree ────────────────────────────────────────────────────────────
 type NodeState = "chosen" | "rejected" | "flagged"
@@ -310,18 +305,11 @@ const ICON_CHEVRON = (
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function AutoReplyCard() {
-  const [decide, setDecide] = useState(132)
   const [hoveredClaim, setHoveredClaim] = useState<ClaimData | null>(null)
   const [mouseAt, setMouseAt] = useState<{ x: number; y: number } | null>(null)
   const [treeOpen, setTreeOpen] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [c1, c2, c3, c4] = CLAIMS as [ClaimData, ClaimData, ClaimData, ClaimData]
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => setDecide((c) => Math.max(0, c - 1)), 1000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [])
 
   function handleClaimEnter(claim: ClaimData, e: React.MouseEvent<HTMLSpanElement>) {
     setHoveredClaim(claim)
@@ -430,7 +418,6 @@ export function AutoReplyCard() {
         {treeOpen && <DecisionTree />}
         </div>
 
-        <CardDefault value={`Send in ${fmt(decide)}`} />
         <footer className="card-actions">
           <button type="button" className="btn primary">{ICON_CHECK} Send</button>
           <button type="button" className="btn ghost">{ICON_EDIT} Edit</button>

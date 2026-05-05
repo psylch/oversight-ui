@@ -14,9 +14,9 @@ export function App() {
   return (
     <>
       <Environment />
-      <OsBar onDispatch={() => setDispatcherOpen(true)} onOpenDesignSystem={() => setDsOpen(true)} />
+      <OsBar onOpenDesignSystem={() => setDsOpen(true)} />
       <main className="workspace">
-        <Sidebar />
+        <Sidebar onDispatch={() => setDispatcherOpen(true)} />
         <CenterStage />
         <OpsPanel />
       </main>

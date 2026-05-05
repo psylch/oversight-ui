@@ -13,10 +13,8 @@ function formatStamp(d: Date): string {
 }
 
 export function OsBar({
-  onDispatch,
   onOpenDesignSystem
 }: {
-  onDispatch: () => void
   onOpenDesignSystem: () => void
 }) {
   const connected = useWsConnected()
@@ -72,17 +70,6 @@ export function OsBar({
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="6 4 20 12 6 20 6 4" />
-          </svg>
-        </button>
-        <button
-          className="header-icon-btn has-tip"
-          type="button"
-          aria-label="Dispatch agent"
-          data-tip="New agent"
-          onClick={onDispatch}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
         <div className="header-avatar" aria-label="User">CL</div>

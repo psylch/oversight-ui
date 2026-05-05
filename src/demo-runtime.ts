@@ -162,6 +162,7 @@ const FAYE = "agent_faye"      // inbound-reply reviewer (rich drill-down card)
 
 const COLE_DECISION_ID = "dec_demo_compare_fluff"
 const ECHO_DECISION_ID = "dec_demo_echo_retract"
+const BECK_DECISION_ID = "dec_demo_beck_batch_approve"
 export const FAYE_DECISION_ID = "dec_demo_faye_autoreply"
 export const FAYE_AGENT_ID = FAYE
 
@@ -169,7 +170,7 @@ function bootScenario() {
   // 1) register five launch-week agents
   const initialAgents: Event[] = [
     agent(ARIA, "Aria · drafts", "waiting", "12 launch-week posts ready for review", 6 * 60 * 1000 + 12 * 1000),
-    agent(BECK, "Beck · outreach", "waiting", "14 of 40 creators awaiting approval", 18 * 60 * 1000 + 4 * 1000),
+    agent(BECK, "Beck · outreach", "stalled", "14 of 40 creators awaiting approval", 18 * 60 * 1000 + 4 * 1000),
     agent(COLE, "Cole · comparison", "stalled", "Compare page · low-confidence sentence", 3 * 60 * 1000 + 21 * 1000),
     agent(DALE, "Dale · ab-test", "working", "Analyzing last night's email A/B (n=4,200)", 9 * 60 * 1000),
     agent(ECHO, "Echo · social", "stalled", "6 overnight auto-replies, 1 flagged casual", 7 * 60 * 1000 + 41 * 1000),
@@ -235,6 +236,53 @@ function bootScenario() {
           { label: "Retraction window", result: "28d remaining (X delete + repost)", ok: true }
         ],
         conclusion: "Retract and re-send in professional tone — low cost to fix, high reputational risk if left."
+      }
+    )
+  ])
+
+  // Beck's decision — comparison shape, sign-off urgency. Two paths for the
+  // outreach queue: batch-approve the 10 that already cleared the fit threshold,
+  // or hand-review every card individually.
+  emitMany([
+    artifact(BECK, "art_fit", "snippet", "Fit-score distribution\n\n10 candidates ≥ 0.8 fit (audience overlap × posting cadence × topical relevance).\n4 candidates 0.55–0.78 — flagged for personalization.", "Fit-score distribution · 10 ≥ 0.8 · 4 < 0.8"),
+    artifact(BECK, "art_src", "snippet", "Where Beck found each creator (sample)\n\n8 from YouTube dev-tool reviews\n4 from GitHub trending (devtools topic)\n2 from HN 'Show HN' commenters", "Sourcing breakdown · 14 candidates"),
+    artifact(BECK, "art_rate", "snippet", "Outreach baseline · 23% reply rate (last 90d)\n\nProjected replies on 10 approvals: ~2.3.\nProjected DM-to-call conversion: ~0.4 calls.", "Reply-rate prior · 23% (last 90d)"),
+    artifact(BECK, "art_template", "snippet", "DM template · brand voice check passed\n\nTemplate scored 0.18 informal — within enterprise-safe range. Per-creator personalization slot already filled from each creator's last public post.", "DM template · brand voice check passed"),
+    decisionOpen(
+      BECK,
+      BECK_DECISION_ID,
+      "Batch-approve the 10 high-fit creators in the outreach queue",
+      "Of 14 creators awaiting approval, 10 cleared 0.8 fit. Batch-approve them so DMs go out today; flag the remaining 4 for personalization. Alternative: review every card individually (~25m of your time).",
+      [
+        { ref: "art_fit",      label: "Fit-score distribution · 10 ≥ 0.8 · 4 < 0.8" },
+        { ref: "art_src",      label: "Sourcing breakdown · 14 candidates" },
+        { ref: "art_rate",     label: "Reply-rate prior · 23% (last 90d)" },
+        { ref: "art_template", label: "DM template · brand voice check passed" }
+      ],
+      "sign-off",
+      "comparison",
+      {
+        kind: "comparison",
+        optionA: {
+          label: "Batch-approve",
+          title: "Approve all 10 high-fit creators",
+          metrics: [
+            { k: "Count",      v: "10" },
+            { k: "Median fit", v: "0.86" },
+            { k: "Time cost",  v: "DMs send in 2m" }
+          ]
+        },
+        optionB: {
+          label: "Review individually",
+          title: "Open each card one by one",
+          metrics: [
+            { k: "Count",      v: "10" },
+            { k: "Median fit", v: "0.86" },
+            { k: "Time cost",  v: "~25m of your time" }
+          ]
+        },
+        pick: "A",
+        pickReason: "All 10 cleared the 0.8 threshold; batch-approve gets DMs out today."
       }
     )
   ])
@@ -374,181 +422,45 @@ export function sendChatInput(agentId: string, text: string) {
   }, 700)
 }
 
-// Per-preset follow-up scripts so dispatched agents come alive and emit a
-// realistic decision after a few seconds. Keeps the demo narrative going
-// after the user clicks a preset card.
+// Per-preset follow-up scripts — keep dispatched agents alive (working state +
+// two chat lines) so the lane shows progress. No auto-spawned decision card:
+// dispatched agents present as in-flight; the supervisor drives any next move
+// from chat, not from a duplicated dossier of the demo lineup.
 const FOLLOW_UPS: Record<
   string,
-  {
-    workingIntent: string
-    chats: [string, string]
-    decision: {
-      headline: string
-      recommendation: string
-      evidence: Array<{
-        ref: string
-        label: string
-        kind: "url" | "snippet"
-        location: string
-      }>
-      shape: DecisionShape
-      shape_payload: ShapePayload
-    }
-  }
+  { workingIntent: string; chats: [string, string] }
 > = {
   // Outreach Scout — finds creators, scores fit, drafts personalized DMs
   "research-analyst": {
     workingIntent: "Scanning developer-tool creators on YouTube + GitHub",
     chats: [
-      "Indexed 40 candidates, 14 awaiting your approval.",
-      "Top 10 score ≥ 0.8 fit — batch-approve candidates ready."
-    ],
-    decision: {
-      headline: "Batch-approve the 10 high-fit creators in the outreach queue",
-      recommendation:
-        "Of 14 creators awaiting approval, 10 score ≥ 0.8 fit (audience overlap with developer-tools, recent posting cadence). Approve the batch; flag the remaining 4 to personalize.",
-      evidence: [
-        { ref: "fit", label: "Fit-score distribution · 10 ≥ 0.8 · 4 < 0.8", kind: "snippet", location: "Fit-score is audience overlap × posting cadence × topical relevance.\n10 candidates ≥ 0.8 — strong batch-approve signal.\n4 candidates 0.55–0.78 — flag for personalization." },
-        { ref: "src", label: "Where AI found each creator (sample)", kind: "snippet", location: "8 from YouTube dev-tool reviews\n4 from GitHub trending (devtools topic)\n2 from HN 'Show HN' commenters" },
-        { ref: "rate", label: "Reply-rate prior · 23% (last 90d)", kind: "snippet", location: "Outreach baseline: 23% reply rate on similar batches.\nProjected replies on 10 approvals: ~2.3." },
-        { ref: "policy", label: "DM template · brand voice check passed", kind: "snippet", location: "DM template scored 0.18 informal — within enterprise-safe range." }
-      ],
-      shape: "comparison",
-      shape_payload: {
-        kind: "comparison",
-        optionA: {
-          label: "Batch-approve",
-          title: "Approve all 10 high-fit creators",
-          metrics: [
-            { k: "Count", v: "10" },
-            { k: "Median fit", v: "0.86" },
-            { k: "ETA", v: "DMs send in 2m" }
-          ]
-        },
-        optionB: {
-          label: "One-by-one",
-          title: "Review each card individually",
-          metrics: [
-            { k: "Count", v: "10" },
-            { k: "Median fit", v: "0.86" },
-            { k: "ETA", v: "~25m of your time" }
-          ]
-        },
-        pick: "A",
-        pickReason: "All 10 cleared the 0.8 threshold; batch-approve gets DMs out today."
-      }
-    }
+      "Indexed 40 candidates, scoring fit on audience × cadence × topic.",
+      "Top 10 cleared 0.8 fit; 4 marginal candidates flagged for personalization."
+    ]
   },
   // Drafter — turns rough angles into ready-to-post drafts
   "writing-partner": {
-    workingIntent: "Drafting 12 launch-week LinkedIn posts",
+    workingIntent: "Drafting launch-week posts across 4 audience angles",
     chats: [
-      "12 drafts ready, tagged by audience angle.",
-      "Draft #7 ('builders / migration story') is the weakest — wants a benchmark."
-    ],
-    decision: {
-      headline: "Pick the launch-day post: builder-migration angle or founder-letter angle",
-      recommendation:
-        "Recommend the builder-migration draft (concrete, has the benchmark you published last month) over the founder-letter draft. Stronger pull on technical audience, matches your past voice.",
-      evidence: [
-        { ref: "draft_a", label: "Draft · builder-migration angle", kind: "snippet", location: "We rebuilt our CI runner from scratch. Median build dropped from 6.4s to 2.1s. Here's what we threw out..." },
-        { ref: "draft_b", label: "Draft · founder-letter angle", kind: "snippet", location: "Six days ago I wrote on a napkin what I wanted this product to feel like..." },
-        { ref: "voice", label: "Past 8 posts · concrete-first ratio 6/8", kind: "snippet", location: "Voice analysis: 6 of 8 prior posts open with a concrete number or scene.\nFounder-letter style: 1/8." }
-      ],
-      shape: "comparison",
-      shape_payload: {
-        kind: "comparison",
-        optionA: {
-          label: "Builder-migration",
-          title: "Concrete · benchmark-led",
-          metrics: [
-            { k: "Pull", v: "Strong" },
-            { k: "Voice match", v: "6/8 prior" },
-            { k: "Length", v: "182 words" }
-          ]
-        },
-        optionB: {
-          label: "Founder-letter",
-          title: "Reflective · narrative-led",
-          metrics: [
-            { k: "Pull", v: "Medium" },
-            { k: "Voice match", v: "1/8 prior" },
-            { k: "Length", v: "240 words" }
-          ]
-        },
-        pick: "A",
-        pickReason: "Concrete number up front; matches your past voice."
-      }
-    }
+      "12 drafts shaped, tagged by audience.",
+      "Draft #7 (builders / migration) wants a benchmark to land — pulling numbers."
+    ]
   },
-  // Comparison Builder — builds competitor comparison pages with sourced claims
+  // Comparison Builder — competitor comparison pages with sourced claims
   "qa-reviewer": {
-    workingIntent: "Auditing /compare/launch for unsourced claims",
+    workingIntent: "Auditing competitor comparison pages for unsourced claims",
     chats: [
-      "Scanned 11 sentences, 1 flagged as marketing-style with no citation.",
-      "Pulled benchmark numbers from build log — ready to swap."
-    ],
-    decision: {
-      headline: "Replace the unsourced fluff sentence on /compare/launch",
-      recommendation:
-        "Replace \"Built for teams who actually ship — unlike legacy tools that slow you down.\" (no citation, marketing-style score 0.87) with a sourced benchmark from last week's build log.",
-      evidence: [
-        { ref: "bench", label: "Build benchmark · last week n=412", kind: "snippet", location: "Median build 2.1s · p95 4.7s.\nSource: ci/build-log.json · week of 2026-04-27." },
-        { ref: "comp", label: "Competitor build-time public docs", kind: "url", location: "https://example.com/competitor/docs/build-times" },
-        { ref: "score", label: "marketing-style score 0.87", kind: "snippet", location: "Flags: superlative phrasing, no number, vague comparison." },
-        { ref: "origin", label: "Original sentence · no source attached", kind: "snippet", location: "Generated by page-writer at 07:58.\nNo upstream citation. [flagged]" }
-      ],
-      shape: "replace",
-      shape_payload: {
-        kind: "replace",
-        existingText: "“Built for teams who actually ship — unlike legacy tools that slow you down.”",
-        suggestionText: "“Median build 2.1s vs. competitor average 6.4s (last week, n=412 builds).”",
-        actionText: "Update /compare/launch and re-render"
-      }
-    }
+      "Scanned 11 sentences across /compare; flagged 1 marketing-style line.",
+      "Pulled benchmark numbers — ready to swap when you want a draft."
+    ]
   },
-  // Social Monitor — watches X/HN/Reddit, auto-replies low-stakes, flags risky
+  // Social Monitor — watches public mentions, auto-replies low-stakes
   "project-scout": {
-    workingIntent: "Reviewing overnight auto-replies on X / HN / Reddit",
+    workingIntent: "Watching X / HN / Reddit for product mentions",
     chats: [
-      "6 replies sent overnight while you were asleep.",
-      "1 flagged: tone score 0.91 vs. account class 'enterprise prospect'."
-    ],
-    decision: {
-      headline: "Retract the overnight auto-reply on @yc-prospect-acme",
-      recommendation:
-        "Reply at 02:41 was \"lol same here 😅\" — too casual for an enterprise prospect (sales tier 1, ~$180k ACV). Spread is still low (1 quote-tweet). Retract within X's 30-day window and re-send formal.",
-      evidence: [
-        { ref: "thread", label: "X thread · @yc-prospect-acme · 02:41", kind: "snippet", location: "@yc-prospect-acme: anyone else having flaky CI on the new runner?\nEcho (auto): lol same here 😅" },
-        { ref: "acct", label: "Account class · enterprise prospect", kind: "snippet", location: "Sales pipeline tier 1.\nLast touch 2026-04-30 by sales@.\nACV est. $180k." },
-        { ref: "tone", label: "Tone score 0.91 · over policy threshold", kind: "snippet", location: "Markers: emoji, lowercase, 'lol'.\nPolicy threshold for enterprise accounts: ≤ 0.30." },
-        { ref: "spread", label: "Spread so far · 1 QT, 0 replies", kind: "snippet", location: "Low blast radius — retraction window still open." }
-      ],
-      shape: "comparison",
-      shape_payload: {
-        kind: "comparison",
-        optionA: {
-          label: "Retract + rewrite",
-          title: "Delete and re-send formal",
-          metrics: [
-            { k: "Window", v: "28d left" },
-            { k: "Spread", v: "1 QT only" },
-            { k: "Cost", v: "1 click" }
-          ]
-        },
-        optionB: {
-          label: "Leave as-is",
-          title: "Accept the casual reply",
-          metrics: [
-            { k: "Risk", v: "Brand tone" },
-            { k: "Account", v: "Tier 1 · $180k" },
-            { k: "Cost", v: "Reputational" }
-          ]
-        },
-        pick: "A",
-        pickReason: "Cheap to fix now; the 8-hour gap isn't fatal while the window is open."
-      }
-    }
+      "Watching 14 keywords across 3 platforms.",
+      "0 high-stakes mentions in the last hour — surfacing summaries on request."
+    ]
   }
 }
 
@@ -573,27 +485,6 @@ export function dispatchAgent(opts: {
     setTimeout(() => {
       emit(chat(id, "agent", followUp.chats[1]))
     }, 9000 * DEMO_PACE)
-
-    setTimeout(() => {
-      const decisionId = `dec_${id}`
-      const evidenceEvents: Event[] = followUp.decision.evidence.map((e) =>
-        artifact(id, e.ref, e.kind, e.location, e.label)
-      )
-      emitMany([
-        ...evidenceEvents,
-        agent(id, opts.display_name, "stalled", "Awaiting your decision", 12000),
-        decisionOpen(
-          id,
-          decisionId,
-          followUp.decision.headline,
-          followUp.decision.recommendation,
-          followUp.decision.evidence.map((e) => ({ ref: e.ref, label: e.label })),
-          "critical",
-          followUp.decision.shape,
-          followUp.decision.shape_payload
-        )
-      ])
-    }, 12000 * DEMO_PACE)
   }
 
   void ({} as AgentActivityItem)

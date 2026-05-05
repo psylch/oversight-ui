@@ -1,4 +1,5 @@
-import type { AgentStateEvent } from "../types"
+import { useEffect, useState } from "react"
+import type { AgentStateEvent, DecisionOpenEvent } from "../types"
 import {
   setSelectedAgent,
   useAgentsByGroup,
@@ -20,21 +21,48 @@ function formatElapsed(ms: number): string {
   return `${h}h ${m % 60}m`
 }
 
+function formatRemaining(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+}
+
+/** Live countdown to a decision's auto-default. Re-renders every second. */
+function Countdown({ deadline }: { deadline: number }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const left = Math.max(0, Math.floor((deadline - now) / 1000))
+  return <>{formatRemaining(left)}</>
+}
+
 interface RowProps {
   agentId: string
   name: string
   sub: string
-  elapsed: string
   selected: boolean
   variant?: "needs" | "flight"
+  /** sign-off → countdown to auto-default · critical (blocking) → nothing
+   *  · no decision → elapsed runtime */
+  rightCell: "countdown" | "blocking" | "elapsed"
+  deadline?: number
+  elapsedMs?: number
   onClick: () => void
 }
 
-function Row({ agentId, name, sub, elapsed, selected, variant = "needs", onClick }: RowProps) {
+function Row({ agentId, name, sub, rightCell, deadline, elapsedMs, selected, variant = "needs", onClick }: RowProps) {
   const cls = ["queue-row"]
   if (selected) {
     cls.push("selected")
     if (variant === "flight") cls.push("flight")
+  }
+  let right: React.ReactNode = null
+  if (rightCell === "countdown" && deadline) {
+    right = <span className="elapsed countdown"><Countdown deadline={deadline} /></span>
+  } else if (rightCell === "elapsed") {
+    right = <span className="elapsed">{formatElapsed(elapsedMs ?? 0)}</span>
   }
   return (
     <button type="button" className={cls.join(" ")} onClick={onClick}>
@@ -43,7 +71,7 @@ function Row({ agentId, name, sub, elapsed, selected, variant = "needs", onClick
         <div className="name">{name}</div>
         <div className="sub">{sub}</div>
       </div>
-      <span className="elapsed">{elapsed}</span>
+      {right}
     </button>
   )
 }
@@ -52,19 +80,34 @@ function AgentRow({
   agent,
   selected,
   variant,
-  sub
+  sub,
+  decision
 }: {
   agent: AgentStateEvent
   selected: boolean
   variant: "needs" | "flight"
   sub: string
+  decision?: DecisionOpenEvent
 }) {
+  // Critical decisions are hard-blocking — no countdown, no elapsed clutter.
+  // Sign-off decisions auto-default after a timeout — show countdown.
+  // Otherwise (running / background / waiting) — show elapsed runtime.
+  let rightCell: "countdown" | "blocking" | "elapsed" = "elapsed"
+  let deadline: number | undefined
+  if (decision?.urgency === "critical") {
+    rightCell = "blocking"
+  } else if (decision?.urgency === "sign-off") {
+    rightCell = "countdown"
+    deadline = decision.ts + decision.timeout_seconds * 1000
+  }
   return (
     <Row
       agentId={agent.agent_id}
       name={agent.display_name}
       sub={sub}
-      elapsed={formatElapsed(agent.elapsed_ms)}
+      rightCell={rightCell}
+      deadline={deadline}
+      elapsedMs={agent.elapsed_ms}
       selected={selected}
       variant={variant}
       onClick={() => setSelectedAgent(agent.agent_id)}
@@ -95,7 +138,7 @@ function Section({ label, variant, count, children }: SectionProps) {
   )
 }
 
-export function Sidebar() {
+export function Sidebar({ onDispatch }: { onDispatch: () => void }) {
   const groups = useAgentsByGroup()
   const selectedId = useSelectedAgentId()
   const openDecisions = useOpenDecisions()
@@ -105,9 +148,11 @@ export function Sidebar() {
     groups.awaitingSignoff.length +
     groups.background.length
 
-  // sub-text helper: prefer the freshest open decision headline
+  const decisionFor = (a: AgentStateEvent) =>
+    openDecisions.find((d) => d.agent_id === a.agent_id)
+
   const subFor = (a: AgentStateEvent) => {
-    const open = openDecisions.find((d) => d.agent_id === a.agent_id)
+    const open = decisionFor(a)
     return open?.headline ?? a.intent ?? a.state
   }
 
@@ -142,17 +187,7 @@ export function Sidebar() {
                   selected={a.agent_id === selectedId}
                   variant="needs"
                   sub={subFor(a)}
-                />
-              ))}
-            </Section>
-            <Section label="Running" variant="running" count={groups.running.length}>
-              {groups.running.map((a) => (
-                <AgentRow
-                  key={a.agent_id}
-                  agent={a}
-                  selected={a.agent_id === selectedId}
-                  variant="flight"
-                  sub={subFor(a)}
+                  decision={decisionFor(a)}
                 />
               ))}
             </Section>
@@ -162,6 +197,18 @@ export function Sidebar() {
               count={groups.awaitingSignoff.length}
             >
               {groups.awaitingSignoff.map((a) => (
+                <AgentRow
+                  key={a.agent_id}
+                  agent={a}
+                  selected={a.agent_id === selectedId}
+                  variant="flight"
+                  sub={subFor(a)}
+                  decision={decisionFor(a)}
+                />
+              ))}
+            </Section>
+            <Section label="Running" variant="running" count={groups.running.length}>
+              {groups.running.map((a) => (
                 <AgentRow
                   key={a.agent_id}
                   agent={a}
@@ -185,6 +232,12 @@ export function Sidebar() {
           </>
         )}
       </div>
+      <button type="button" className="queue-dispatch-slot" onClick={onDispatch}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span>Dispatch agent</span>
+      </button>
     </aside>
   )
 }

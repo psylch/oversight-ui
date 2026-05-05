@@ -317,8 +317,8 @@ input, textarea, select { font: inherit; color: inherit; }
   background: var(--ink-4);
 }
 .queue-head.needs .dot { background: var(--c-needs); box-shadow: 0 0 6px var(--c-needs); }
-.queue-head.running .dot { background: var(--c-flight); }
-.queue-head.awaiting .dot { background: var(--c-needs); opacity: 0.55; }
+.queue-head.awaiting .dot { background: var(--c-flight); box-shadow: 0 0 6px var(--c-flight); }
+.queue-head.running .dot { background: var(--c-flight); opacity: 0.55; }
 .queue-head .num { margin-left: auto; color: var(--ink-3); font-size: 10.5px; }
 
 .queue-row {
@@ -367,7 +367,9 @@ input, textarea, select { font: inherit; color: inherit; }
   font-family: var(--mono);
   font-size: 10.5px;
   color: var(--ink-3);
+  letter-spacing: 0.04em;
 }
+.queue-row .elapsed.countdown { color: var(--ink-2); }
 .queue-row.selected .elapsed { color: var(--c-needs); }
 .queue-row.selected.flight .elapsed { color: var(--c-flight); }
 
@@ -3134,3 +3136,38 @@ html, body, #root {
 
 /* Ink grid */
 .ds-ink-grid { display: flex; flex-direction: column; gap: 8px; }
+
+/* Sidebar — dispatch agents slot. Dashed-edge "drop zone" affordance pinned
+   to the queue's bottom; sits as a sibling of .queue-sections so it stays
+   put when the list scrolls. */
+.queue-dispatch-slot {
+  flex: 0 0 auto;
+  margin: 8px 4px 0;
+  padding: 14px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: transparent;
+  border: 1px dashed var(--hair-strong);
+  border-radius: var(--radius-md);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.queue-dispatch-slot:hover {
+  border-color: var(--c-action-edge);
+  color: var(--ink-1);
+  background: var(--c-action-soft);
+}
+.queue-dispatch-slot:active { transform: scale(0.99); }
+.queue-dispatch-slot:focus-visible {
+  outline: 2px solid var(--c-action);
+  outline-offset: 2px;
+}
+.queue-dispatch-slot svg { color: var(--ink-3); }
+.queue-dispatch-slot:hover svg { color: var(--c-action); }

@@ -8,32 +8,33 @@ interface AgentPreset {
   description: string
 }
 
-interface AgentPresetWithSlug extends AgentPreset {
-  slug: string
+interface AgentPresetWithPersona extends AgentPreset {
+  /** Sidebar lane label, in the same "Persona · role" form as the demo agents. */
+  displayName: string
 }
 
-const PRESETS: AgentPresetWithSlug[] = [
+const PRESETS: AgentPresetWithPersona[] = [
   {
     id: "research-analyst",
-    slug: "outreach",
+    displayName: "Iris · outreach",
     name: "Outreach Scout",
     description: "Finds creators, scores fit, drafts personalized DMs."
   },
   {
     id: "writing-partner",
-    slug: "drafts",
+    displayName: "Juno · drafts",
     name: "Drafter",
     description: "Turns rough angles into ready-to-post drafts; tags by audience."
   },
   {
     id: "qa-reviewer",
-    slug: "comparison",
+    displayName: "Kai · comparison",
     name: "Comparison Builder",
     description: "Builds competitor comparison pages with sourced claims."
   },
   {
     id: "project-scout",
-    slug: "social",
+    displayName: "Lyra · social",
     name: "Social Monitor",
     description: "Watches X / HN / Reddit; auto-replies low-stakes; flags risky."
   }
@@ -78,7 +79,7 @@ export function AgentDispatcher({ open, onClose }: AgentDispatcherProps) {
     setSubmitting(true)
     const { dispatchAgent } = await import("../demo-runtime")
     const id = dispatchAgent({
-      display_name: `${selected.name.split(" ")[0]} · ${selected.slug}`,
+      display_name: selected.displayName,
       intent: goal,
       preset: selected.id
     })
