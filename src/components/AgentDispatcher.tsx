@@ -134,17 +134,19 @@ export function AgentDispatcher({ open, onClose }: AgentDispatcherProps) {
             onKeyDown={onTextareaKey}
             placeholder="What should this agent do? One or two sentences."
             rows={4}
+            data-step-target="dispatcher-intent"
           />
 
           <div>
             <span className="field-label">Preset</span>
             <div className="preset-grid">
-              {PRESETS.map((preset) => (
+              {PRESETS.map((preset, i) => (
                 <button
                   key={preset.id}
                   type="button"
                   className={`preset-card ${presetId === preset.id ? "selected" : ""}`}
                   onClick={() => setPresetId(preset.id)}
+                  data-step-target={i === 0 ? "dispatcher-preset-first" : undefined}
                 >
                   <span className="preset-avatar">
                     <AgentAvatar agentId={preset.id} size="md" />
@@ -173,6 +175,7 @@ export function AgentDispatcher({ open, onClose }: AgentDispatcherProps) {
             className="primary-btn"
             disabled={submitting || !intent.trim()}
             onClick={dispatch}
+            data-step-target="dispatcher-confirm"
           >
             {submitting ? "Dispatching…" : "Dispatch"}
           </button>

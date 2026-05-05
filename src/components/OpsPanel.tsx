@@ -131,6 +131,7 @@ export function OpsPanel() {
             type="button"
             className={`tab${tab === "chat" ? " active" : ""}`}
             onClick={() => setTab("chat")}
+            data-step-target="ops-tab:chat"
           >
             {ICON_CHAT}
             Chat
@@ -228,6 +229,7 @@ export function OpsPanel() {
           </div>
           <form
               className="chat-composer"
+              data-step-target="chat-composer"
               onSubmit={(ev) => {
                 ev.preventDefault()
                 const text = draft.trim()

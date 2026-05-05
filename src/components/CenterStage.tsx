@@ -792,6 +792,7 @@ function DossierCard(p: DossierProps) {
           <button
             type="button"
             className="btn primary"
+            data-step-target="card-primary"
             onClick={() => { setFlash("approve"); p.onPrimary() }}
           >
             {ICON_CHECK}

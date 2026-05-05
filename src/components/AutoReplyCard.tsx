@@ -161,7 +161,7 @@ function ConfidenceRing({ pct }: { pct: number }) {
   const filled = circ * pct
   const ringColor = pct >= 0.8 ? "var(--c-ok)" : pct >= 0.6 ? "var(--c-warn)" : "var(--c-needs)"
   return (
-    <svg viewBox="0 0 100 100" className="ar-ring" aria-hidden="true">
+    <svg viewBox="0 0 100 100" className="ar-ring" aria-hidden="true" data-step-target="ar-ring">
       <circle cx="50" cy="50" r={r} fill="none" style={{ stroke: "var(--hair)" }} strokeWidth="11" />
       <circle
         cx="50" cy="50" r={r}
@@ -273,7 +273,7 @@ function DecisionTree() {
         </div>
       </div>
 
-      <svg className="ar-tree-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Decision tree">
+      <svg className="ar-tree-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Decision tree" data-step-target="ar-tree-svg">
         {TREE_EDGES.map((e, i) => {
           const s = nodes[e.from], t = nodes[e.to]
           if (!s || !t) return null
@@ -408,6 +408,7 @@ export function AutoReplyCard() {
               className={`ar-tree-toggle${treeOpen ? " open" : ""}`}
               onClick={() => setTreeOpen((v) => !v)}
               aria-expanded={treeOpen}
+              data-step-target="ar-tree-toggle"
             >
               {treeOpen ? "Hide decision path" : "Trace decision path"}
               {ICON_CHEVRON}

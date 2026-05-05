@@ -223,6 +223,176 @@ input, textarea, select { font: inherit; color: inherit; }
   display: grid; place-items: center;
   border: 2px solid oklch(0.115 0.01 278);
 }
+.fake-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10001;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  will-change: transform;
+}
+
+.step-pulse {
+  position: relative;
+  outline: 2px solid var(--c-action-edge);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm, 6px);
+  animation: step-pulse-anim 1.4s ease-out infinite;
+}
+
+@keyframes step-pulse-anim {
+  0%, 100% { outline-color: var(--c-action-edge); box-shadow: 0 0 0 0 var(--c-action-glow); }
+  50%      { outline-color: var(--c-action); box-shadow: 0 0 0 10px transparent; }
+}
+
+.stepper-dock {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 280px;
+  background: var(--card);
+  border: 1px solid var(--c-action-edge);
+  border-radius: var(--radius-md, 8px);
+  padding: 12px 14px 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: inherit;
+}
+.stepper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.stepper-flow { color: var(--ink-2); }
+.stepper-progress { color: var(--c-action); font-weight: 600; }
+.stepper-step {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-1);
+  line-height: 1.4;
+  padding: 4px 0 2px;
+  min-height: 20px;
+}
+.stepper-actions {
+  display: flex;
+  gap: 6px;
+}
+.stepper-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-4);
+  letter-spacing: 0.4px;
+  padding-top: 2px;
+}
+
+.demo-menu-actions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 6px 4px;
+}
+.demo-menu-btn {
+  flex: 1;
+  appearance: none;
+  background: var(--card-2);
+  color: var(--ink-1);
+  border: 1px solid var(--hair-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.demo-menu-btn:hover { background: var(--card); border-color: var(--c-action-edge); }
+.demo-menu-btn.primary {
+  background: var(--c-action-soft);
+  border-color: var(--c-action-edge);
+  color: var(--ink-1);
+}
+.demo-menu-btn.primary:hover { background: var(--c-action-edge); }
+.demo-menu-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.replay-toast {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translate(-50%, -8px);
+  background: var(--card);
+  border: 1px solid var(--c-action-edge);
+  color: var(--ink-1);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 200;
+  pointer-events: none;
+}
+.replay-toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.demo-menu-wrap { position: relative; }
+.demo-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 260px;
+  background: var(--card);
+  border: 1px solid var(--hair-strong);
+  border-radius: var(--radius-md, 8px);
+  padding: 6px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.demo-menu-head {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 8px 10px 6px;
+}
+.demo-menu-item {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--ink-1);
+  transition: background 0.12s;
+}
+.demo-menu-item:hover { background: var(--card-2); }
+.demo-menu-item:focus-visible { outline: 2px solid var(--c-action); outline-offset: -2px; }
+.demo-menu-label { font-size: 13px; font-weight: 500; }
+.demo-menu-sub {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-4);
+  letter-spacing: 0.2px;
+}
+
 .header-avatar {
   width: 32px; height: 32px;
   border-radius: 999px;

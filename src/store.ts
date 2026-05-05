@@ -39,6 +39,8 @@ interface State {
   opsTab: OpsTab
   wsConnected: boolean
   seenSeqs: Set<number>
+  // Active replay step id (e.g., "flow1.cole-show"). Drives FakeCursor + pulse.
+  replayStep: string | null
 }
 
 export type OpsTab = "audit" | "chat" | "files"
@@ -56,7 +58,8 @@ const state: State = {
   selectedAgentId: null,
   opsTab: "audit",
   wsConnected: false,
-  seenSeqs: new Set()
+  seenSeqs: new Set(),
+  replayStep: null
 }
 
 let snapshot: State = state
@@ -94,7 +97,17 @@ export function resetStore() {
   state.activity = []
   state.selectedAgentId = null
   state.seenSeqs.clear()
+  state.replayStep = null
   emit()
+}
+
+export function setReplayStep(step: string | null) {
+  state.replayStep = step
+  emit()
+}
+
+export function useReplayStep(): string | null {
+  return useStore((s) => s.replayStep)
 }
 
 function pushActivity(item: AgentActivityItem) {

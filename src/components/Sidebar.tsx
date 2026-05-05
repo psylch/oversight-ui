@@ -65,7 +65,7 @@ function Row({ agentId, name, sub, rightCell, deadline, elapsedMs, selected, var
     right = <span className="elapsed">{formatElapsed(elapsedMs ?? 0)}</span>
   }
   return (
-    <button type="button" className={cls.join(" ")} onClick={onClick}>
+    <button type="button" className={cls.join(" ")} onClick={onClick} data-step-target={`lane:${agentId}`}>
       <AgentAvatar agentId={agentId} size="sm" title={name} />
       <div className="queue-row-text">
         <div className="name">{name}</div>
@@ -232,7 +232,7 @@ export function Sidebar({ onDispatch }: { onDispatch: () => void }) {
           </>
         )}
       </div>
-      <button type="button" className="queue-dispatch-slot" onClick={onDispatch}>
+      <button type="button" className="queue-dispatch-slot" onClick={onDispatch} data-step-target="dispatch-slot">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
