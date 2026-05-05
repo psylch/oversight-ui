@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChatMessageEvent } from "../types"
 import {
+  setOpsTab,
   useActivityForAgent,
   useAgent,
   useAgents,
   useChatForAgent,
   useManagedRunForAgent,
+  useOpsTab,
   useSelectedAgentId,
   useStore
 } from "../store"
@@ -51,6 +53,18 @@ function formatTime(ts: number): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
 
+interface ChatTurn { role: ChatMessageEvent["role"]; messages: ChatMessageEvent[] }
+
+function groupTurns(messages: ChatMessageEvent[]): ChatTurn[] {
+  const turns: ChatTurn[] = []
+  for (const m of messages) {
+    const last = turns[turns.length - 1]
+    if (last && last.role === m.role && m.role !== "system") last.messages.push(m)
+    else turns.push({ role: m.role, messages: [m] })
+  }
+  return turns
+}
+
 
 
 function fileKindFor(location: string): { kind: string; label: string } {
@@ -63,7 +77,8 @@ function fileKindFor(location: string): { kind: string; label: string } {
 }
 
 export function OpsPanel() {
-  const [tab, setTab] = useState<Tab>("audit")
+  const tab = useOpsTab()
+  const setTab = (t: Tab) => setOpsTab(t)
   const selectedId = useSelectedAgentId()
   const agent = useAgent(selectedId)
   const allAgents = useAgents()
@@ -163,40 +178,52 @@ export function OpsPanel() {
 
         {/* CHAT */}
         <div className={`tab-section${tab === "chat" ? " active" : ""}`} role="tabpanel">
-          <div className="body" ref={feedRef}>
+          {agent && (
+            <header className="chat-thread-head">
+              <AgentAvatar agentId={agent.agent_id} size="md" title={agent.display_name} />
+              <div className="chat-thread-id">
+                <div className="name">{agent.display_name}</div>
+                <div className="state">
+                  <span className={`state-dot ${agent.state}`} />
+                  <span className="state-text">{agent.intent ?? agent.state}</span>
+                </div>
+              </div>
+            </header>
+          )}
+          <div className="body chat-thread" ref={feedRef}>
             {chatMessages.length === 0 ? (
               <div className="panel-empty">
                 {agent
-                  ? "No chat yet. CLI-emitted chat and agent replies will appear here."
-                  : "Select an agent to inspect its conversation."}
+                  ? "No messages yet. Type below to talk to this agent."
+                  : "Select an agent to start a conversation."}
               </div>
             ) : (
-              chatMessages.map((m: ChatMessageEvent) => (
-                <button key={m.seq} type="button" className="chat-row">
-                  <div
-                    className={`chat-avatar${m.role === "user" ? " user" : " identity"}`}
-                  >
-                    {m.role === "user" ? (
-                      "ME"
-                    ) : (
-                      <AgentAvatar
-                        agentId={agent?.agent_id ?? "unknown"}
-                        size="sm"
-                        title={agent?.display_name}
-                      />
-                    )}
-                  </div>
-                  <div className="chat-content">
-                    <div className="top">
-                      <span className="name">
-                        {m.role === "user" ? "You" : agent?.display_name ?? "Agent"}
-                      </span>
-                      <span className="ts">{formatTime(m.ts)}</span>
+              <>
+                <div className="chat-day-divider">Today</div>
+                {groupTurns(chatMessages).map((turn, ti) => {
+                  if (turn.role === "system") {
+                    const m = turn.messages[0]!
+                    return (
+                      <div key={`sys-${ti}`} className="chat-bubble system">
+                        <span className="dot" />
+                        <span>{m.text}</span>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div key={`turn-${ti}`} className={`chat-turn ${turn.role}`}>
+                      {turn.messages.map((m, mi) => (
+                        <div key={m.seq} className={`chat-bubble ${turn.role}`}>
+                          {m.text}
+                          {mi === turn.messages.length - 1 && (
+                            <span className="chat-bubble-tail">{formatTime(m.ts)}</span>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <div className="msg">{m.text}</div>
-                  </div>
-                </button>
-              ))
+                  )
+                })}
+              </>
             )}
           </div>
           <form

@@ -13,9 +13,11 @@ function formatStamp(d: Date): string {
 }
 
 export function OsBar({
-  onDispatch
+  onDispatch,
+  onOpenDesignSystem
 }: {
   onDispatch: () => void
+  onOpenDesignSystem: () => void
 }) {
   const connected = useWsConnected()
   const agentCount = useAgents().length
@@ -52,6 +54,15 @@ export function OsBar({
         <span className="meta">{formatStamp(now)}</span>
       </div>
       <div className="header-right">
+        <button
+          className="header-icon-btn has-tip ds-entry-btn"
+          type="button"
+          aria-label="Open design system"
+          data-tip="Design system"
+          onClick={onOpenDesignSystem}
+        >
+          <span className="ds-entry-label">DESIGN</span>
+        </button>
         <button
           className="header-icon-btn has-tip"
           type="button"

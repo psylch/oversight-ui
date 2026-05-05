@@ -36,9 +36,12 @@ interface State {
   runs: Map<string, AgentRunEvent>
   activity: AgentActivityItem[]
   selectedAgentId: AgentId | null
+  opsTab: OpsTab
   wsConnected: boolean
   seenSeqs: Set<number>
 }
+
+export type OpsTab = "audit" | "chat" | "files"
 
 const listeners = new Set<Listener>()
 
@@ -51,6 +54,7 @@ const state: State = {
   runs: new Map(),
   activity: [],
   selectedAgentId: null,
+  opsTab: "audit",
   wsConnected: false,
   seenSeqs: new Set()
 }
@@ -210,6 +214,15 @@ export function setWsConnected(connected: boolean) {
 export function setSelectedAgent(agentId: AgentId | null) {
   state.selectedAgentId = agentId
   emit()
+}
+
+export function setOpsTab(tab: OpsTab) {
+  state.opsTab = tab
+  emit()
+}
+
+export function useOpsTab(): OpsTab {
+  return useStore((s) => s.opsTab)
 }
 
 export function useStore<T>(selector: (s: State) => T): T {

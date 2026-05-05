@@ -166,7 +166,7 @@ export function Sidebar() {
                   key={a.agent_id}
                   agent={a}
                   selected={a.agent_id === selectedId}
-                  variant="needs"
+                  variant="flight"
                   sub={subFor(a)}
                 />
               ))}
@@ -177,7 +177,7 @@ export function Sidebar() {
                   key={a.agent_id}
                   agent={a}
                   selected={a.agent_id === selectedId}
-                  variant="needs"
+                  variant="flight"
                   sub={subFor(a)}
                 />
               ))}

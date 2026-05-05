@@ -10,6 +10,7 @@ import type {
   Tier
 } from "../types"
 import {
+  setOpsTab,
   tierForArtifact,
   useArtifactsByRefs,
   useCriticalDecisionCount,
@@ -18,9 +19,10 @@ import {
   useSelectedAgentId,
   useAgent
 } from "../store"
-import { sendAction } from "../demo-runtime"
+import { sendAction, FAYE_AGENT_ID } from "../demo-runtime"
 import { SourcePreview } from "./SourcePreview"
 import { AgentAvatar } from "./AgentAvatar"
+import { AutoReplyCard } from "./AutoReplyCard"
 
 function formatRemaining(seconds: number): string {
   if (seconds <= 0) return "00:00"
@@ -498,6 +500,17 @@ export function CenterStage() {
     </div>
   )
 
+  // Drill-down variant — Faye escalated her scenario to a richer card.
+  // The agent owns the choice of card form; CenterStage just dispatches.
+  if (decision && decision.agent_id === FAYE_AGENT_ID) {
+    return (
+      <>
+        <AutoReplyCard />
+        {toastNode}
+      </>
+    )
+  }
+
   // No selected agent and no decision: show empty + closed overlay slot
   if (!decision) {
     if (!agent) {
@@ -567,7 +580,7 @@ export function CenterStage() {
         sendAction(decision.decision_id, reject.id)
         flashToast("Rejected · agent paused")
       }}
-      onChat={() => {}}
+      onChat={() => setOpsTab("chat")}
       onPreviewEvidence={(name, art) => {
         if (art) {
           setPreview({
@@ -786,6 +799,14 @@ function DossierCard(p: DossierProps) {
             {ICON_REJECT}
             {p.rejectLabel ?? "Reject"}
           </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={p.onChat}
+          >
+            {ICON_CHAT}
+            Chat
+          </button>
         </footer>
       </article>
 
@@ -838,7 +859,7 @@ export function DemoDossier() {
       primaryLabel="Approve"
       onPrimary={() => {}}
       onReject={() => {}}
-      onChat={() => {}}
+      onChat={() => setOpsTab("chat")}
       onPreviewEvidence={(name) => setPreview(v7DemoPreviewFor(name))}
       preview={preview}
       onClosePreview={() => setPreview(null)}

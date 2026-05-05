@@ -158,9 +158,12 @@ const ECHO = "agent_morrow"    // social monitor
 const DALE = "agent_corwin"    // A/B test analyst
 const BECK = "agent_harlow"    // creator-outreach scout
 const ARIA = "agent_tilden"    // launch-post drafter
+const FAYE = "agent_faye"      // inbound-reply reviewer (rich drill-down card)
 
 const COLE_DECISION_ID = "dec_demo_compare_fluff"
 const ECHO_DECISION_ID = "dec_demo_echo_retract"
+export const FAYE_DECISION_ID = "dec_demo_faye_autoreply"
+export const FAYE_AGENT_ID = FAYE
 
 function bootScenario() {
   // 1) register five launch-week agents
@@ -169,7 +172,8 @@ function bootScenario() {
     agent(BECK, "Beck · outreach", "waiting", "14 of 40 creators awaiting approval", 18 * 60 * 1000 + 4 * 1000),
     agent(COLE, "Cole · comparison", "stalled", "Compare page · low-confidence sentence", 3 * 60 * 1000 + 21 * 1000),
     agent(DALE, "Dale · ab-test", "working", "Analyzing last night's email A/B (n=4,200)", 9 * 60 * 1000),
-    agent(ECHO, "Echo · social", "stalled", "6 overnight auto-replies, 1 flagged casual", 7 * 60 * 1000 + 41 * 1000)
+    agent(ECHO, "Echo · social", "stalled", "6 overnight auto-replies, 1 flagged casual", 7 * 60 * 1000 + 41 * 1000),
+    agent(FAYE, "Faye · replies", "stalled", "Auto-reply on @raj_builds thread · 4 claims to verify", 17 * 60 * 1000 + 8 * 1000)
   ]
   emitMany(initialAgents)
 
@@ -235,6 +239,27 @@ function bootScenario() {
     )
   ])
 
+  // Faye's decision — drill-down variant card (rendered by AutoReplyCard).
+  // The agent decided this scenario is rich enough (4 claims with mixed
+  // provenance) to escalate from a standard decision card into a custom
+  // claim-attribution view. Evidence array stays minimal — the rich
+  // breakdown lives inside AutoReplyCard itself.
+  emitMany([
+    artifact(FAYE, "art_thread2", "snippet", "X thread · 2h ago\n\n@raj_builds: \"is your thing actually faster than Riverbend for folks on enterprise plans? or is that a benchmark thing\"", "X thread · @raj_builds"),
+    artifact(FAYE, "art_conf", "snippet", "Overall confidence 62%\n\n3 of 4 claims cited.\n1 low-confidence claim (no source, casual tone).\nBelow your 80% auto-send threshold.", "Overall confidence 62% · below threshold"),
+    decisionOpen(
+      FAYE,
+      FAYE_DECISION_ID,
+      "Auto-reply on @raj_builds thread — 1 of 4 claims uncited",
+      "Faye drafted a reply with 4 claims: build benchmark, public benchmark date, competitor pricing tier, and a casual DM offer. Claim ❹ has no source and reads casual for an enterprise prospect. Confidence 62% — below your 80% auto-send threshold.",
+      [
+        { ref: "art_thread2", label: "X thread · @raj_builds" },
+        { ref: "art_conf", label: "Overall confidence 62% · below threshold" }
+      ],
+      "critical"
+    )
+  ])
+
   // 3) trickle chat + audit over time
   let t = 1500
   const trickle = [
@@ -243,6 +268,15 @@ function bootScenario() {
     () => emit(chat(ECHO, "agent", "Tone score 0.91 vs. account class ‘enterprise prospect’ — over threshold.")),
     () => emit(chat(DALE, "agent", "A/B test (n=4,200) — variant B +18% click-through. Drafting summary.")),
     () => emit(chat(BECK, "agent", "10 of the 14 pending creators score ≥ 0.8 fit — batch-approve candidates.")),
+    () => emit(chat(FAYE, "agent", "Drafted reply has 4 claims; ❹ has no source and reads casual.")),
+    () => emit(chat(FAYE, "user",  "Hold on — claim ❹ is the only one with no source. Why did you draft it at all?")),
+    () => emit(chat(FAYE, "agent", "Raj asking “or is that a benchmark thing” reads as an implicit ask for raw data. The “happy to DM” line lets me back the public claims without bloating the public reply. But the line itself is a template — no upstream source.")),
+    () => emit(chat(FAYE, "user",  "What's the risk if I just leave ❹ in?")),
+    () => emit(chat(FAYE, "agent", "Two. (1) Tone — “happy to DM” lands light for the tier-1 prospects lurking in this thread. (2) The trace itself isn't shippable yet; only the internal-perf one exists, and that has unredacted customer IDs.")),
+    () => emit(chat(FAYE, "user",  "What do you actually recommend?")),
+    () => emit(chat(FAYE, "agent", "Either edit ❹ to “Drop me a note if you want the methodology — happy to share the script.” Same offer, drops the casual tone, shifts the burden from a private trace to a doc. Or decline; @raj_builds has 1.2k followers — not high-leverage for launch.")),
+    () => emit(chat(FAYE, "user",  "Edit. Keep ❶ ❷ ❸. Send.")),
+    () => emit(chat(FAYE, "system", "Sent at 08:43. Saved “no model-only claim → ask first” as a rule.")),
     // tick elapsed for Cole so the queue counter moves
     () => emit(agent(COLE, "Cole · comparison", "stalled", "Compare page · low-confidence sentence", 3 * 60 * 1000 + 38 * 1000))
   ]

@@ -1,5 +1,5 @@
 // Visual identity for an agent: color × shape × expression.
-// Catalog covers the 6 demo agents and the 4 dispatcher presets.
+// Catalog covers the demo agents and the dispatcher presets.
 // Unknown agent_ids fall back to a deterministic hash so anything new still
 // gets a stable identity instead of a letter blob.
 
@@ -72,7 +72,7 @@ function hexToOklchHue(hex: string): number {
   return h < 0 ? h + 360 : h
 }
 
-const COLORS = [
+export const COLORS = [
   "#7dff3a", // lime
   "#ff5c8a", // pink
   "#3fb6ff", // sky
@@ -95,6 +95,7 @@ const CATALOG: Record<string, CatalogEntry> = {
   agent_harlow: { color: "#7dff3a", shape: "soft-spark", expression: "confident" },
   agent_tilden: { color: "#3fb6ff", shape: "bubble-star", expression: "curious" },
   agent_bain: { color: "#3fd9a0", shape: "mint-flower", expression: "calm" },
+  agent_faye: { color: "#ff5c8a", shape: "cloud-spark", expression: "skeptical" },
 
   // Dispatcher presets
   "research-analyst": { color: "#3fb6ff", shape: "puffy-star", expression: "curious" },
