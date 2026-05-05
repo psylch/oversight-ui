@@ -93,32 +93,32 @@ const ICON_SHIELD = (
 
 const DEMO_DECISION = {
   agentId: "agent_nash",
-  agent: "Nash · research",
-  ts: "22:14 UTC",
-  category: "Brief approval",
+  agent: "Cole · comparison",
+  ts: "08:42 local",
+  category: "Compare-page review",
   pillKind: "needs" as const,
   pillLabel: "Needs decision",
-  title: "Approve Q3 brief draft v2 with revised Plaid claim",
+  title: "Replace the unsourced fluff sentence on /compare/launch",
   rec: (
     <>
-      Replace the unverified <strong>"60% of Series-B fintechs use Plaid"</strong> with{" "}
-      <strong>"majority of Series-B fintechs (no single dataset covers all regions)"</strong>, then
-      ship v2 to the brief channel.
+      Cole flagged <strong>"Built for teams who actually ship — unlike legacy tools that slow you down."</strong>{" "}
+      as marketing-style with no citation. Replace with{" "}
+      <strong>"Median build 2.1s vs. competitor average 6.4s (last week, n=412 builds)"</strong>, then re-render the comparison page.
     </>
   ),
   shape: "replace" as DecisionShape,
   shapePayload: {
     kind: "replace",
-    existingText: "“60% of Series-B fintechs use Plaid”",
+    existingText: "“Built for teams who actually ship — unlike legacy tools that slow you down.”",
     suggestionText:
-      "“majority of Series-B fintechs (no single dataset covers all regions)”",
-    actionText: "Ship v2 to #q3-brief channel"
+      "“Median build 2.1s vs. competitor average 6.4s (last week, n=412 builds).”",
+    actionText: "Update /compare/launch and re-render"
   } satisfies ShapePayload,
   evidence: [
-    { badge: "V", name: "CB Insights · State of Fintech Q2", flagged: false },
-    { badge: "V", name: "Plaid customers page", flagged: false },
-    { badge: "M", name: "trust-score 0.42", flagged: false },
-    { badge: "U", name: "HN thread #2024-1119 · flagged", flagged: true }
+    { badge: "V", name: "Build benchmark · last week n=412", flagged: false },
+    { badge: "V", name: "Competitor build-time public docs", flagged: false },
+    { badge: "M", name: "marketing-style score 0.87", flagged: false },
+    { badge: "U", name: "Original sentence · no source attached", flagged: true }
   ],
   defaultCountdown: "Approve & ship in 06:00"
 }
@@ -149,8 +149,7 @@ function urgencyPillLabel(u: DecisionOpenEvent["urgency"]): string {
 
 interface DispatchPreset {
   id: string
-  mark: string
-  color: "cyan" | "violet" | "amber" | "green"
+  slug: string
   name: string
   description: string
   goal: string
@@ -159,35 +158,31 @@ interface DispatchPreset {
 const DISPATCH_PRESETS: DispatchPreset[] = [
   {
     id: "research-analyst",
-    mark: "R",
-    color: "cyan",
-    name: "Research Analyst",
-    description: "Finds sources, checks claims, returns evidence-backed notes.",
-    goal: "Pull and verify sources for the current brief"
+    slug: "outreach",
+    name: "Outreach Scout",
+    description: "Finds creators, scores fit, drafts personalized DMs.",
+    goal: "Find 40 dev-tool creators and score fit for launch outreach"
   },
   {
     id: "writing-partner",
-    mark: "W",
-    color: "violet",
-    name: "Writing Partner",
-    description: "Turns rough direction into structured drafts; pauses at forks.",
-    goal: "Draft the introduction and surface fork points"
+    slug: "drafts",
+    name: "Drafter",
+    description: "Turns rough angles into ready-to-post drafts; tags by audience.",
+    goal: "Draft launch-week posts across 4 audience angles"
   },
   {
     id: "qa-reviewer",
-    mark: "Q",
-    color: "amber",
-    name: "QA Reviewer",
-    description: "Reproduces issues concretely and verifies fixes.",
-    goal: "Triage open issues and propose fixes"
+    slug: "comparison",
+    name: "Comparison Builder",
+    description: "Builds competitor comparison pages with sourced claims.",
+    goal: "Audit /compare/launch for unsourced claims and replace with citations"
   },
   {
     id: "project-scout",
-    mark: "S",
-    color: "green",
-    name: "Project Scout",
-    description: "Maps a workspace, builds context, proposes the next move.",
-    goal: "Map the codebase and propose next refactor target"
+    slug: "social",
+    name: "Social Monitor",
+    description: "Watches X / HN / Reddit; auto-replies low-stakes; flags risky.",
+    goal: "Watch overnight mentions and flag anything off-tone for enterprise prospects"
   }
 ]
 
@@ -378,13 +373,13 @@ function CenterEmpty(_props: { counter: string; calm: boolean }) {
                   onClick={async () => {
                     const { dispatchAgent } = await import("../demo-runtime")
                     dispatchAgent({
-                      display_name: `${p.name.split(" ")[0]} · ${p.id.split("-")[0]}`,
+                      display_name: `${p.name.split(" ")[0]} · ${p.slug}`,
                       intent: p.goal,
                       preset: p.id
                     })
                   }}
                 >
-                  <span className={`badge tier-${p.color}`}>{p.mark}</span>
+                  <AgentAvatar agentId={p.id} size="md" title={p.name} />
                   <span className="cold-start-row-copy">
                     <span className="cold-start-row-name">{p.name}</span>
                     <span className="cold-start-row-desc">{p.description}</span>
@@ -422,14 +417,31 @@ interface PreviewArtifact {
 }
 
 function v7DemoPreviewFor(name: string): PreviewArtifact {
-  if (name.toLowerCase().includes("plaid")) {
-    return { kind: "url", location: "https://plaid.com/customers/", label: name }
+  const n = name.toLowerCase()
+  if (n.includes("competitor") && n.includes("docs")) {
+    return { kind: "url", location: "https://example.com/competitor/docs/build-times", label: name }
   }
-  if (name.toLowerCase().includes("hn")) {
+  if (n.includes("benchmark")) {
     return {
       kind: "snippet",
       location:
-        "HN comments thread (excerpt)\n\n> sample is heavily skewed toward US-only Series-B; the 60% figure does not generalize across EU/APAC.\n\n[flagged · trust-score 0.42]",
+        "Build benchmark · last week\n\nMedian build time: 2.1s\np95: 4.7s\nSample: 412 builds\nSource: ci/build-log.json (week of 2026-04-27).",
+      label: name
+    }
+  }
+  if (n.includes("original sentence") || n.includes("no source")) {
+    return {
+      kind: "snippet",
+      location:
+        "Original sentence · provenance trace\n\nNo upstream source attached. Generated by the page-writer step at 07:58 with prompt slot 'tone: punchy'.\n\n[flagged · no citation]",
+      label: name
+    }
+  }
+  if (n.includes("marketing-style")) {
+    return {
+      kind: "snippet",
+      location:
+        "marketing-style score 0.87\n\nFlags: superlative phrasing, no number, vague comparison.\nCues: 'actually ship', 'slow you down'.",
       label: name
     }
   }

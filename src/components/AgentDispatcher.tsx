@@ -8,26 +8,34 @@ interface AgentPreset {
   description: string
 }
 
-const PRESETS: AgentPreset[] = [
+interface AgentPresetWithSlug extends AgentPreset {
+  slug: string
+}
+
+const PRESETS: AgentPresetWithSlug[] = [
   {
     id: "research-analyst",
-    name: "Research Analyst",
-    description: "Finds sources, checks claims, returns evidence-backed notes."
+    slug: "outreach",
+    name: "Outreach Scout",
+    description: "Finds creators, scores fit, drafts personalized DMs."
   },
   {
     id: "writing-partner",
-    name: "Writing Partner",
-    description: "Turns rough direction into structured drafts; pauses at forks."
+    slug: "drafts",
+    name: "Drafter",
+    description: "Turns rough angles into ready-to-post drafts; tags by audience."
   },
   {
     id: "qa-reviewer",
-    name: "QA Reviewer",
-    description: "Reproduces issues concretely and verifies fixes."
+    slug: "comparison",
+    name: "Comparison Builder",
+    description: "Builds competitor comparison pages with sourced claims."
   },
   {
     id: "project-scout",
-    name: "Project Scout",
-    description: "Maps a workspace, builds context, proposes the next move."
+    slug: "social",
+    name: "Social Monitor",
+    description: "Watches X / HN / Reddit; auto-replies low-stakes; flags risky."
   }
 ]
 
@@ -70,7 +78,7 @@ export function AgentDispatcher({ open, onClose }: AgentDispatcherProps) {
     setSubmitting(true)
     const { dispatchAgent } = await import("../demo-runtime")
     const id = dispatchAgent({
-      display_name: `${selected.name.split(" ")[0]} · ${selected.id.split("-")[0]}`,
+      display_name: `${selected.name.split(" ")[0]} · ${selected.slug}`,
       intent: goal,
       preset: selected.id
     })
