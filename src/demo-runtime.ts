@@ -539,3 +539,41 @@ export function dispatchAgent(opts: {
   void ({} as AgentActivityItem)
   return id
 }
+
+export type RecCardState = "active" | "expired" | "declined"
+
+export interface DemoRecCard {
+  id: string
+  agentId: string
+  title: string
+  timeLabel: string
+  state: RecCardState
+  subtext: string
+}
+
+export const DEMO_REC_CARDS: DemoRecCard[] = [
+  {
+    id: "rec_social",
+    agentId: "rec_agent_social",
+    title: "Social Media Post Ready: FlintKit Q",
+    timeLabel: "18min to expire",
+    state: "active",
+    subtext: "Hi Marcus — Re-attaching the redlined MSA…"
+  },
+  {
+    id: "rec_vendor",
+    agentId: "rec_agent_vendor",
+    title: "VendorOS: pricing pushback",
+    timeLabel: "0mins left · expired",
+    state: "expired",
+    subtext: "Pushed back on the 11% step-up…"
+  },
+  {
+    id: "rec_declined",
+    agentId: "rec_agent_declined",
+    title: "Declined: Q3 partnership renewal terms",
+    timeLabel: "visible for 2hrs",
+    state: "declined",
+    subtext: "Agent E will not send this reply. Choose what happens next."
+  }
+]

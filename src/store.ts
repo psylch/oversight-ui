@@ -36,6 +36,7 @@ interface State {
   runs: Map<string, AgentRunEvent>
   activity: AgentActivityItem[]
   selectedAgentId: AgentId | null
+  selectedRecCardId: string | null
   wsConnected: boolean
   seenSeqs: Set<number>
 }
@@ -51,6 +52,7 @@ const state: State = {
   runs: new Map(),
   activity: [],
   selectedAgentId: null,
+  selectedRecCardId: null,
   wsConnected: false,
   seenSeqs: new Set()
 }
@@ -89,6 +91,7 @@ export function resetStore() {
   state.runs.clear()
   state.activity = []
   state.selectedAgentId = null
+  state.selectedRecCardId = null
   state.seenSeqs.clear()
   emit()
 }
@@ -210,6 +213,15 @@ export function setWsConnected(connected: boolean) {
 export function setSelectedAgent(agentId: AgentId | null) {
   state.selectedAgentId = agentId
   emit()
+}
+
+export function setSelectedRecCard(id: string | null) {
+  state.selectedRecCardId = id
+  emit()
+}
+
+export function useSelectedRecCardId(): string | null {
+  return useStore((s) => s.selectedRecCardId)
 }
 
 export function useStore<T>(selector: (s: State) => T): T {
