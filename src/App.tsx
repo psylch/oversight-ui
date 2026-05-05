@@ -10,9 +10,35 @@ import { Sidebar } from "./components/Sidebar"
 import { Stepper } from "./components/Stepper"
 import { nextStep } from "./replay-engine"
 
+// Lightweight path-based routing for the design system deep-link.
+// CLAUDE.md forbids a routing library — this is a single boolean derived
+// from window.location, kept in sync with browser back/forward via the
+// popstate event. Visiting /ds opens the Design System overlay; closing it
+// (or clicking back) restores the dashboard at /.
+function readDsFromPath() {
+  if (typeof window === "undefined") return false
+  return window.location.pathname.replace(/\/+$/, "") === "/ds"
+}
+
 export function App() {
   const [dispatcherOpen, setDispatcherOpen] = useState(false)
-  const [dsOpen, setDsOpen] = useState(false)
+  const [dsOpen, setDsOpen] = useState<boolean>(readDsFromPath)
+
+  // Keep dsOpen in sync with the URL (browser back / forward, manual edits)
+  useEffect(() => {
+    const onPop = () => setDsOpen(readDsFromPath())
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [])
+
+  // When dsOpen toggles via UI (OsBar click / close), reflect it into the URL
+  // so the deep link stays accurate and the back button works.
+  useEffect(() => {
+    const target = dsOpen ? "/ds" : "/"
+    if (window.location.pathname !== target) {
+      window.history.pushState({}, "", target)
+    }
+  }, [dsOpen])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
