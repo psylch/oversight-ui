@@ -1,11 +1,14 @@
 import type { AgentStateEvent } from "../types"
 import {
   setSelectedAgent,
+  setSelectedRecCard,
   useAgentsByGroup,
   useOpenDecisions,
   useSelectedAgentId
 } from "../store"
 import { AgentAvatar } from "./AgentAvatar"
+import { DEMO_REC_CARDS } from "../demo-runtime"
+import type { DemoRecCard } from "../demo-runtime"
 
 function formatElapsed(ms: number): string {
   if (ms < 1000) return "0s"
@@ -69,6 +72,39 @@ function AgentRow({
       variant={variant}
       onClick={() => setSelectedAgent(agent.agent_id)}
     />
+  )
+}
+
+function RecCardItem({ card }: { card: DemoRecCard }) {
+  return (
+    <button
+      type="button"
+      className={`queue-row rec-row ${card.state}`}
+      onClick={() => card.id === "rec_social" ? setSelectedRecCard(card.id) : undefined}
+    >
+      <AgentAvatar agentId={card.agentId} size="sm" title={card.title} />
+      <div className="queue-row-text">
+        <div className="name">{card.title}</div>
+        <div className="sub">{card.subtext}</div>
+      </div>
+      <span className="elapsed">{card.timeLabel}</span>
+    </button>
+  )
+}
+
+function RecommendationsSection() {
+  return (
+    <div className="rec-section">
+      <div className="rec-divider" />
+      <div className="queue-head">
+        <span className="dot" />
+        Recommendations
+        <span className="num">{DEMO_REC_CARDS.length}</span>
+      </div>
+      {DEMO_REC_CARDS.map((card) => (
+        <RecCardItem key={card.id} card={card} />
+      ))}
+    </div>
   )
 }
 
@@ -182,6 +218,7 @@ export function Sidebar() {
                 />
               ))}
             </Section>
+            <RecommendationsSection />
           </>
         )}
       </div>

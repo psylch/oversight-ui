@@ -16,8 +16,10 @@ import {
   useLatestDecisionForAgent,
   useOpenDecisions,
   useSelectedAgentId,
+  useSelectedRecCardId,
   useAgent
 } from "../store"
+import { AutoReplyCard } from "./AutoReplyCard"
 import { sendAction } from "../demo-runtime"
 import { SourcePreview } from "./SourcePreview"
 import { AgentAvatar } from "./AgentAvatar"
@@ -441,6 +443,7 @@ function v7DemoPreviewFor(name: string): PreviewArtifact {
 }
 
 export function CenterStage() {
+  const selectedRecCardId = useSelectedRecCardId()
   const selectedId = useSelectedAgentId()
   const agent = useAgent(selectedId)
   const decision = useLatestDecisionForAgent(selectedId)
@@ -478,6 +481,8 @@ export function CenterStage() {
     }, 1000)
     return () => clearInterval(t)
   }, [decision, deadline])
+
+  if (selectedRecCardId === "rec_social") return <AutoReplyCard />
 
   const toastNode = toast && (
     <div className="momentum-toast" role="status" aria-live="polite">
